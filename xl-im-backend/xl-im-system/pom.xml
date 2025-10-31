@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承父项目配置 -->
+    <parent>
+        <groupId>com.xl</groupId>
+        <artifactId>xl-im</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <!-- 系统模块 artifactId -->
+    <artifactId>xl-im-system</artifactId>
+    <!-- 打包方式为 jar -->
+    <packaging>jar</packaging>
+
+    <!-- 依赖配置 -->
+    <dependencies>
+        <!-- 依赖通用模块，获取基础配置和工具类 -->
+        <dependency>
+            <groupId>com.xl</groupId>
+            <artifactId>xl-im-common</artifactId>
+        </dependency>
+    </dependencies>
+</project>

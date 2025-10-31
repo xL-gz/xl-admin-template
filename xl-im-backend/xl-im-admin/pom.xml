@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- 继承父项目配置 -->
+    <parent>
+        <groupId>com.xl</groupId>
+        <artifactId>xl-im</artifactId>
+        <version>1.0.0</version>
+    </parent>
+
+    <!-- 管理模块 artifactId -->
+    <artifactId>xl-im-admin</artifactId>
+    <!-- 打包方式为 jar -->
+    <packaging>jar</packaging>
+
+    <!-- 依赖配置 -->
+    <dependencies>
+        <!-- 依赖系统模块，获取业务逻辑实现 -->
+        <dependency>
+            <groupId>com.xl</groupId>
+            <artifactId>xl-im-system</artifactId>
+        </dependency>
+    </dependencies>
+
+    <!-- 构建配置 -->
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven 插件，用于打包可执行 jar -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>${spring-boot.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <!-- 重新打包，生成可执行 jar -->
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
