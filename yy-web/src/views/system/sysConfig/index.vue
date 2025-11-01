@@ -78,9 +78,11 @@
                   <a-textarea v-model:value="baseForm.sysDescription" :autoSize="{ minRows: 5, maxRows: 10 }" placeholder="请输入" />
                 </a-form-item>
               </a-col>
-              <a-form-item label=" ">
-                <a-button :loading="btnLoading" type="primary" @click.prevent="handleSubmit">保存 </a-button>
-              </a-form-item>
+              <a-col :span="24">
+                <a-form-item label=" ">
+                  <a-button :loading="btnLoading" type="primary" @click.prevent="handleSubmit">保存 </a-button>
+                </a-form-item>
+              </a-col>
             </a-row>
           </a-tab-pane>
           <a-tab-pane :key="2" class="p-30px" tab="安全设置">
@@ -320,6 +322,66 @@
               </a-tab-pane>
             </a-tabs>
           </a-tab-pane>
+          
+          <!-- API服务器配置标签页 -->
+          <a-tab-pane :key="4" class="p-30px" tab="API服务器配置">
+            <a-row>
+              <a-col :span="24">
+                <a-form-item label="服务器类型">
+                  <a-radio-group v-model:value="baseForm.apiServerType" @change="handleApiServerTypeChange">
+                    <a-radio value="local">本地服务器</a-radio>
+                    <a-radio value="remote">远程服务器</a-radio>
+                    <a-radio value="custom">自定义</a-radio>
+                  </a-radio-group>
+                  <div class="common-tip mt-5px">选择API服务器的地址类型，用于切换前端访问的后端服务地址</div>
+                </a-form-item>
+              </a-col>
+              <a-col :span="24" v-if="baseForm.apiServerType === 'custom' || baseForm.apiServerType === 'remote'">
+                <a-form-item label="API地址">
+                  <a-input 
+                    v-model:value="baseForm.apiBaseUrl" 
+                    placeholder="如: http://localhost:20250 或 http://159.75.243.81:20250" 
+                    allowClear>
+                    <template #prefix>🔗</template>
+                  </a-input>
+                  <div class="common-tip mt-5px">
+                    <span v-if="baseForm.apiServerType === 'remote'">远程服务器地址（如：http://159.75.243.81:20250）</span>
+                    <span v-else>自定义API服务器地址，需要包含完整的协议和端口号</span>
+                  </div>
+                </a-form-item>
+              </a-col>
+              <a-col :span="24">
+                <a-alert
+                  :message="`当前API地址: ${getCurrentApiUrl()}`"
+                  type="info"
+                  show-icon
+                  :closable="false"
+                />
+              </a-col>
+              <a-col :span="24">
+                <a-alert
+                  message="配置说明"
+                  type="warning"
+                  show-icon
+                  :closable="false"
+                >
+                  <template #description>
+                    <div>
+                      <p><strong>本地服务器：</strong>使用本地开发环境，地址为 http://localhost:20250</p>
+                      <p><strong>远程服务器：</strong>使用部署在云服务器上的后端服务</p>
+                      <p><strong>自定义：</strong>可以手动输入任意后端服务地址</p>
+                      <p class="mt-10px"><strong>注意：</strong>更改API地址后，建议刷新页面以确保配置完全生效</p>
+                    </div>
+                  </template>
+                </a-alert>
+              </a-col>
+              <a-col :span="24">
+                <a-form-item label=" ">
+                  <a-button :loading="btnLoading" type="primary" @click.prevent="handleSubmit">保存 </a-button>
+                </a-form-item>
+              </a-col>
+            </a-row>
+          </a-tab-pane>
         </a-tabs>
       </a-form>
     </div>
@@ -369,17 +431,69 @@
       if (!data.cloudServerStorageConfigs) {
         data.cloudServerStorageConfigs = [];
       }
+      
+      // 初始化API配置（如果没有则从localStorage读取或使用默认值）
+      if (!data.apiServerType) {
+        const savedApiType = localStorage.getItem('apiServerType');
+        const savedApiUrl = localStorage.getItem('apiBaseUrl');
+        data.apiServerType = savedApiType || 'local';
+        data.apiBaseUrl = savedApiUrl || '';
+      }
+      
       state.baseForm = data;
       console.log('加载的数据:', JSON.stringify(data, null, 2));
       console.log('云服务器配置数量:', data.cloudServerStorageConfigs?.length || 0);
+      
+      // 同步API配置到localStorage
+      updateApiConfigToStorage();
     }).catch(err => {
       console.error('获取系统配置失败:', err);
       // 即使失败也要初始化空数组
+      const savedApiType = localStorage.getItem('apiServerType');
+      const savedApiUrl = localStorage.getItem('apiBaseUrl');
       state.baseForm = {
         ossStorageConfigs: [],
-        cloudServerStorageConfigs: []
+        cloudServerStorageConfigs: [],
+        apiServerType: savedApiType || 'local',
+        apiBaseUrl: savedApiUrl || ''
       };
+      updateApiConfigToStorage();
     });
+  }
+  
+  // 更新API配置到localStorage
+  function updateApiConfigToStorage() {
+    if (state.baseForm.apiServerType) {
+      localStorage.setItem('apiServerType', state.baseForm.apiServerType);
+    }
+    if (state.baseForm.apiBaseUrl) {
+      localStorage.setItem('apiBaseUrl', state.baseForm.apiBaseUrl);
+    }
+    // 触发页面重新加载API配置
+    window.dispatchEvent(new Event('apiConfigChanged'));
+  }
+  
+  // API服务器类型改变时的处理
+  function handleApiServerTypeChange() {
+    if (state.baseForm.apiServerType === 'local') {
+      // 本地服务器，使用默认地址
+      state.baseForm.apiBaseUrl = '';
+    } else if (state.baseForm.apiServerType === 'remote') {
+      // 远程服务器，设置默认远程地址
+      if (!state.baseForm.apiBaseUrl || state.baseForm.apiBaseUrl.includes('localhost')) {
+        state.baseForm.apiBaseUrl = 'http://159.75.243.81:20250';
+      }
+    }
+  }
+  
+  // 获取当前API地址
+  function getCurrentApiUrl() {
+    if (state.baseForm.apiServerType === 'local') {
+      return 'http://localhost:20250 (默认本地地址)';
+    } else if (state.baseForm.apiBaseUrl) {
+      return state.baseForm.apiBaseUrl;
+    }
+    return '未配置';
   }
 
   function handleSubmit() {
@@ -401,6 +515,10 @@
           .then(res => {
             createMessage.success(res.msg);
             state.btnLoading = false;
+            
+            // 更新API配置到localStorage
+            updateApiConfigToStorage();
+            
             const sysConfigInfo = {
               sysName: state.baseForm.sysName,
               sysVersion: state.baseForm.sysVersion,
@@ -410,6 +528,12 @@
               title: state.baseForm.title,
             };
             appStore.setProjectConfig({ sysConfigInfo });
+            
+            // 提示需要刷新页面以应用API地址更改
+            if (state.baseForm.apiServerType !== 'local' || state.baseForm.apiBaseUrl) {
+              createMessage.warning('API地址已更改，建议刷新页面以确保配置生效');
+            }
+            
             // 保存后重新加载数据
             setTimeout(() => {
               initData();

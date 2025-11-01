@@ -62,6 +62,10 @@ public class SystemConfig {
     @Field("cloudServerStorageConfigs")
     private List<CloudServerStorageConfig> cloudServerStorageConfigs;
     
+    // API服务器配置
+    private String apiServerType;          // API服务器类型（local/remote/custom）
+    private String apiBaseUrl;             // API基础地址
+    
     /**
      * OSS存储配置内部类
      */

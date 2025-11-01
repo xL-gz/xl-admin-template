@@ -42,13 +42,11 @@ spring:
       password: ${REDIS_PASSWORD:}
       database: 0
 
-# 日志配置
+# 日志配置（使用logback-spring.xml配置，这里只做基础配置）
 logging:
   level:
     com.xl: info
     org.springframework.web: warn
-  file:
-    name: /var/log/xl-im/application.log
-    max-size: 10MB
-    max-history: 30
+  # 日志配置文件路径（使用logback-spring.xml）
+  config: classpath:logback-spring.xml
 

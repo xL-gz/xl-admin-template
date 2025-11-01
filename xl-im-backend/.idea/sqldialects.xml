@@ -4,6 +4,5 @@
     <file url="file://$PROJECT_DIR$/xl-im-admin/src/main/resources/mongodb/init_system_config.js" dialect="MongoDB" />
     <file url="file://$PROJECT_DIR$/xl-im-admin/src/main/resources/mongodb/init_system_config_enhanced.js" dialect="MongoDB" />
     <file url="file://$PROJECT_DIR$/xl-im-admin/src/main/resources/sql/xl_im_complete.sql" dialect="MySQL" />
-    <file url="file://$PROJECT_DIR$/xl-im-admin/src/main/resources/sql/xl_im_complete_enhanced.sql" dialect="MySQL" />
   </component>
 </project>

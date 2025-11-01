@@ -1,5 +1,6 @@
-com\xl\admin\controller\SystemController.class
+com\xl\admin\controller\FileController.class
 com\xl\admin\XlImApplication.class
+com\xl\admin\controller\SystemController.class
 com\xl\admin\controller\SystemConfigController.class
 com\xl\admin\controller\MenuController.class
 com\xl\admin\controller\AuthController.class
