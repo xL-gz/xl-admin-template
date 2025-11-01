@@ -6,9 +6,9 @@ enum Api {
 
 // 获取指定应用系统的菜单列表（树形结构）
 export function getMenuList(data) {
-  return defHttp.get({ 
+  return defHttp.get({
     url: `${Api.Prefix}/ModuleBySystem/${data.systemId}`,
-    params: data 
+    params: data,
   });
 }
 
@@ -19,17 +19,17 @@ export function getAllMenuList(data?) {
 
 // 获取上级菜单下拉框（带systemId过滤）
 export function getMenuSelector(data, id, systemId = '0') {
-  return defHttp.get({ 
+  return defHttp.get({
     url: `${Api.Prefix}/Selector/${id || '0'}/${systemId}`,
-    params: data 
+    params: data,
   });
 }
 
 // 获取所有菜单选择器
 export function getSelectorAll(data) {
-  return defHttp.get({ 
+  return defHttp.get({
     url: `${Api.Prefix}/Selector/All`,
-    params: data 
+    params: data,
   });
 }
 
@@ -50,9 +50,12 @@ export function getInfo(id) {
 
 // 删除菜单
 export function delMenu(id) {
-  return defHttp.delete({ url: `${Api.Prefix}/${id}` }, {
-    errorMessageMode: 'message',  // 确保显示错误提示
-  });
+  return defHttp.delete(
+    { url: `${Api.Prefix}/${id}` },
+    {
+      errorMessageMode: 'message', // 确保显示错误提示
+    },
+  );
 }
 
 // 导出系统菜单数据

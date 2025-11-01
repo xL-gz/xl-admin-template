@@ -3,6 +3,7 @@ package com.xl.system.entity;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import java.util.List;
 
 /**
  * 系统配置实体类
@@ -51,4 +52,39 @@ public class SystemConfig {
     private String newUserDefaultPassword;   // 新用户默认密码
     private String navigationIcon;           // 导航图标
     private String workLogoIcon;             // 工作台LOGO图标
+    
+    // 文件存储配置 - OSS存储配置列表
+    private List<OssStorageConfig> ossStorageConfigs;
+    
+    // 文件存储配置 - 云服务器存储配置列表
+    private List<CloudServerStorageConfig> cloudServerStorageConfigs;
+    
+    /**
+     * OSS存储配置内部类
+     */
+    @Data
+    public static class OssStorageConfig {
+        private String name;                  // 配置名称
+        private String endpoint;              // OSS访问域名，如: https://oss-cn-beijing.aliyuncs.com
+        private String accessKeyId;           // OSS AccessKeyId
+        private String accessKeySecret;       // OSS AccessKeySecret
+        private String bucketName;            // OSS存储桶名称
+        private String region;                // OSS区域，如: cn-beijing
+        private String domain;                // OSS自定义域名（可选）
+        private Boolean enabled;              // 是否启用
+        private Integer sortCode;             // 排序码
+    }
+    
+    /**
+     * 云服务器存储配置内部类
+     */
+    @Data
+    public static class CloudServerStorageConfig {
+        private String name;                  // 配置名称
+        private String serverAddress;         // 云服务器地址，如: http://192.168.1.100:8080 或 https://files.example.com
+        private String storagePath;           // 存储路径，如: /uploads 或 /var/www/uploads
+        private String accessKey;             // 访问密钥（可选）
+        private Boolean enabled;              // 是否启用
+        private Integer sortCode;             // 排序码
+    }
 }

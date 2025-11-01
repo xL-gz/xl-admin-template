@@ -33,6 +33,7 @@ import {
   Progress,
   Image,
   Upload,
+  Empty,
 } from 'ant-design-vue';
 
 import { BasicHelp, BasicCaption } from '@/components/Basic';
@@ -115,6 +116,7 @@ export function registerGlobComp(app: App) {
     .use(Progress)
     .use(Image)
     .use(Upload)
+    .use(Empty)
     .use(BasicHelp)
     .use(YouyiAlert)
     .use(YouyiRate)

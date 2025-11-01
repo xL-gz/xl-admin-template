@@ -6,6 +6,24 @@
           <a-tab-pane :key="1" class="p-30px" tab="基本设置">
             <a-row>
               <a-col :span="24">
+                <a-form-item label="系统图标">
+                  <div class="system-icons-container">
+                    <div class="icon-upload-item">
+                      <div class="icon-upload-label">登录图标</div>
+                      <YouyiUploadImgSingle v-model:value="baseForm.loginIcon" :tipText="baseForm.loginIcon ? '' : '上传图标'" />
+                    </div>
+                    <div class="icon-upload-item">
+                      <div class="icon-upload-label">LOGO图标</div>
+                      <YouyiUploadImgSingle v-model:value="baseForm.logoIcon" :tipText="baseForm.logoIcon ? '' : '上传图标'" />
+                    </div>
+                    <div class="icon-upload-item">
+                      <div class="icon-upload-label">APP图标</div>
+                      <YouyiUploadImgSingle v-model:value="baseForm.appIcon" :tipText="baseForm.appIcon ? '' : '上传图标'" />
+                    </div>
+                  </div>
+                </a-form-item>
+              </a-col>
+              <a-col :span="24">
                 <a-form-item label="系统标题">
                   <a-input v-model:value="baseForm.title" allowClear placeholder="请输入" />
                 </a-form-item>
@@ -158,6 +176,150 @@
               </a-tab-pane>
             </a-tabs>
           </a-tab-pane>
+          <a-tab-pane :key="3" class="p-30px" tab="文件存储配置">
+            <a-tabs v-model:activeKey="storageTab" style="height: 100%" tab-position="left">
+              <a-tab-pane :key="1" tab="OSS存储配置">
+                <a-row>
+                  <a-col :span="24">
+                    <div class="storage-config-header">
+                      <span class="storage-title">OSS对象存储配置</span>
+                      <a-button type="primary" @click="addOssConfig">
+                        <template #icon><PlusOutlined /></template>
+                        添加OSS配置
+                      </a-button>
+                    </div>
+                  </a-col>
+                  <a-col :span="24" v-if="!baseForm.ossStorageConfigs || baseForm.ossStorageConfigs.length === 0">
+                    <a-empty description="暂无OSS配置，点击上方按钮添加" />
+                  </a-col>
+                  <a-col :span="24" v-for="(ossConfig, index) in baseForm.ossStorageConfigs" :key="index" class="storage-config-item">
+                    <a-card :title="ossConfig.name || `OSS配置 ${index + 1}`" class="storage-card">
+                      <template #extra>
+                        <a-space>
+                          <a-switch v-model:checked="ossConfig.enabled" checked-children="启用" un-checked-children="禁用" />
+                          <a-button type="link" danger @click="removeOssConfig(index)">
+                            <template #icon><DeleteOutlined /></template>
+                            删除
+                          </a-button>
+                        </a-space>
+                      </template>
+                      <a-row :gutter="16">
+                        <a-col :span="12">
+                          <a-form-item label="配置名称">
+                            <a-input v-model:value="ossConfig.name" placeholder="请输入配置名称" />
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="排序码">
+                            <a-input-number v-model:value="ossConfig.sortCode" :min="0" placeholder="排序码" />
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="OSS Endpoint">
+                            <a-input v-model:value="ossConfig.endpoint" placeholder="如: https://oss-cn-beijing.aliyuncs.com" />
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="OSS Region">
+                            <a-input v-model:value="ossConfig.region" placeholder="如: cn-beijing" />
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="OSS Bucket">
+                            <a-input v-model:value="ossConfig.bucketName" placeholder="存储桶名称" />
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="OSS 访问域名">
+                            <a-input v-model:value="ossConfig.domain" placeholder="自定义域名（可选）" />
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="AccessKeyId">
+                            <a-input-password v-model:value="ossConfig.accessKeyId" placeholder="OSS AccessKeyId" />
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="AccessKeySecret">
+                            <a-input-password v-model:value="ossConfig.accessKeySecret" placeholder="OSS AccessKeySecret" />
+                          </a-form-item>
+                        </a-col>
+                      </a-row>
+                    </a-card>
+                  </a-col>
+                  <a-col :span="24">
+                    <a-form-item label=" ">
+                      <a-button :loading="btnLoading" type="primary" @click.prevent="handleSubmit">保存 </a-button>
+                    </a-form-item>
+                  </a-col>
+                </a-row>
+              </a-tab-pane>
+              <a-tab-pane :key="2" tab="云服务器存储配置">
+                <a-row>
+                  <a-col :span="24">
+                    <div class="storage-config-header">
+                      <span class="storage-title">云服务器存储配置</span>
+                      <a-button type="primary" @click="addCloudServerConfig">
+                        <template #icon><PlusOutlined /></template>
+                        添加云服务器配置
+                      </a-button>
+                    </div>
+                  </a-col>
+                  <a-col :span="24" v-if="!baseForm.cloudServerStorageConfigs || baseForm.cloudServerStorageConfigs.length === 0">
+                    <a-empty description="暂无云服务器配置，点击上方按钮添加" />
+                  </a-col>
+                  <a-col :span="24" v-for="(cloudConfig, index) in baseForm.cloudServerStorageConfigs" :key="index" class="storage-config-item">
+                    <a-card :title="cloudConfig.name || `云服务器配置 ${index + 1}`" class="storage-card">
+                      <template #extra>
+                        <a-space>
+                          <a-switch v-model:checked="cloudConfig.enabled" checked-children="启用" un-checked-children="禁用" />
+                          <a-button type="link" danger @click="removeCloudServerConfig(index)">
+                            <template #icon><DeleteOutlined /></template>
+                            删除
+                          </a-button>
+                        </a-space>
+                      </template>
+                      <a-row :gutter="16">
+                        <a-col :span="12">
+                          <a-form-item label="配置名称">
+                            <a-input v-model:value="cloudConfig.name" placeholder="请输入配置名称" />
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="排序码">
+                            <a-input-number v-model:value="cloudConfig.sortCode" :min="0" placeholder="排序码" />
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="服务器地址">
+                            <a-input v-model:value="cloudConfig.serverAddress" placeholder="如: http://192.168.1.100:8080 或 https://files.example.com" />
+                            <div class="common-tip mt-5px">云服务器的访问地址</div>
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="存储路径">
+                            <a-input v-model:value="cloudConfig.storagePath" placeholder="如: /uploads 或 /var/www/uploads" />
+                            <div class="common-tip mt-5px">服务器本地文件存储路径，建议使用绝对路径</div>
+                          </a-form-item>
+                        </a-col>
+                        <a-col :span="12">
+                          <a-form-item label="访问密钥">
+                            <a-input-password v-model:value="cloudConfig.accessKey" placeholder="访问密钥（可选）" />
+                            <div class="common-tip mt-5px">可选，用于访问服务器的认证</div>
+                          </a-form-item>
+                        </a-col>
+                      </a-row>
+                    </a-card>
+                  </a-col>
+                  <a-col :span="24">
+                    <a-form-item label=" ">
+                      <a-button :loading="btnLoading" type="primary" @click.prevent="handleSubmit">保存 </a-button>
+                    </a-form-item>
+                  </a-col>
+                </a-row>
+              </a-tab-pane>
+            </a-tabs>
+          </a-tab-pane>
         </a-tabs>
       </a-form>
     </div>
@@ -171,11 +333,14 @@
   import { getSysConfig, update } from '@/api/system/sysConfig';
   import { useRoute } from 'vue-router';
   import YouyiSwitch from '@/components/Youyi/Switch/src/Switch.vue';
+  import YouyiUploadImgSingle from '@/components/Youyi/Upload/src/UploadImgSingle.vue';
+  import { PlusOutlined, DeleteOutlined } from '@ant-design/icons-vue';
 
   interface State {
     baseForm: any;
     activeKey: number;
     securityTab: number;
+    storageTab: number;
     btnLoading: boolean;
   }
 
@@ -185,10 +350,11 @@
     baseForm: {},
     activeKey: 1,
     securityTab: 1,
+    storageTab: 1,
     btnLoading: false,
   });
 
-  const { baseForm, activeKey, securityTab, btnLoading } = toRefs(state);
+  const { baseForm, activeKey, securityTab, storageTab, btnLoading } = toRefs(state);
   const { createConfirm, createMessage } = useMessage();
   const { t } = useI18n();
   const appStore = useAppStore();
@@ -238,9 +404,65 @@
     state.baseForm.newUserDefaultPassword = '0000';
   }
 
+  // OSS存储配置相关方法
+  function addOssConfig() {
+    if (!state.baseForm.ossStorageConfigs) {
+      state.baseForm.ossStorageConfigs = [];
+    }
+    state.baseForm.ossStorageConfigs.push({
+      name: '',
+      endpoint: '',
+      accessKeyId: '',
+      accessKeySecret: '',
+      bucketName: '',
+      region: '',
+      domain: '',
+      enabled: true,
+      sortCode: state.baseForm.ossStorageConfigs.length,
+    });
+  }
+
+  function removeOssConfig(index: number) {
+    createConfirm({
+      iconType: 'warning',
+      title: '确认删除',
+      content: '确定要删除这个OSS配置吗？',
+      onOk: () => {
+        state.baseForm.ossStorageConfigs.splice(index, 1);
+      },
+    });
+  }
+
+  // 云服务器存储配置相关方法
+  function addCloudServerConfig() {
+    if (!state.baseForm.cloudServerStorageConfigs) {
+      state.baseForm.cloudServerStorageConfigs = [];
+    }
+    state.baseForm.cloudServerStorageConfigs.push({
+      name: '',
+      serverAddress: '',
+      storagePath: '',
+      accessKey: '',
+      enabled: true,
+      sortCode: state.baseForm.cloudServerStorageConfigs.length,
+    });
+  }
+
+  function removeCloudServerConfig(index: number) {
+    createConfirm({
+      iconType: 'warning',
+      title: '确认删除',
+      content: '确定要删除这个云服务器配置吗？',
+      onOk: () => {
+        state.baseForm.cloudServerStorageConfigs.splice(index, 1);
+      },
+    });
+  }
+
   onMounted(() => {
     const route = useRoute();
     if (route.query.type == '1') state.activeKey = 2;
+    if (route.query.type == '2') state.activeKey = 3;
     initData();
   });
 </script>
@@ -249,5 +471,60 @@
     color: @text-color-secondary;
     font-size: 14px;
     line-height: 1;
+  }
+
+  .system-icons-container {
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+
+    .icon-upload-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+
+      .icon-upload-label {
+        font-size: 14px;
+        color: @text-color;
+        font-weight: 500;
+      }
+
+      :deep(.single-img-container) {
+        width: 120px;
+        height: 120px;
+
+        .ant-upload-list-picture-card-container,
+        .img-uploader .ant-upload {
+          width: 120px;
+          height: 120px;
+        }
+      }
+    }
+  }
+
+  .storage-config-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #f0f0f0;
+
+    .storage-title {
+      font-size: 16px;
+      font-weight: 500;
+      color: @text-color;
+    }
+  }
+
+  .storage-config-item {
+    margin-bottom: 20px;
+
+    .storage-card {
+      :deep(.ant-card-head-title) {
+        font-weight: 500;
+      }
+    }
   }
 </style>

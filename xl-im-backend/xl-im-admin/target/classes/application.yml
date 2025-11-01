@@ -29,10 +29,10 @@ spring:
           max-wait: -1ms
           min-idle: 0
           max-idle: 8
-    # MongoDB配置（暂时禁用，后期需要时再启用）
-    # mongodb:
-    #   uri: mongodb://localhost:27017/xl_im
-    #   database: xl_im
+    # MongoDB配置
+    mongodb:
+      uri: mongodb://localhost:27017/xl_im
+      database: xl_im
 
 # MyBatis Plus配置
 mybatis-plus:
