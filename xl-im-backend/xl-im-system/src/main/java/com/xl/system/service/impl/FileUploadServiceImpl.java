@@ -132,20 +132,56 @@ public class FileUploadServiceImpl implements FileUploadService {
      * 保存文件到本地路径（适用于应用部署在云服务器上的情况）
      */
     private String saveToLocalPath(File file, String basePath) throws IOException {
-        String fileName = file.getName().substring(file.getName().indexOf("_") + 1); // 去掉UUID前缀
+        String fullFileName = file.getName();
+        String fileName = fullFileName.contains("_") ? fullFileName.substring(fullFileName.indexOf("_") + 1) : fullFileName;
+        
+        // 根据文件名识别类型
+        String category = getFileCategoryFromFileName(fileName);
+        
+        // 生成文件路径：按类型和日期分目录
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
         
         // 确保basePath是绝对路径
-        Path targetDir = Paths.get(basePath, datePath);
+        Path targetDir = Paths.get(basePath, category, datePath);
         Files.createDirectories(targetDir);
         
         Path targetFile = targetDir.resolve(fileName);
         Files.copy(file.toPath(), targetFile);
         
-        String relativePath = datePath + "/" + fileName;
-        log.info("文件已保存到云服务器: {} -> {}", fileName, targetFile.toString());
+        String relativePath = category + "/" + datePath + "/" + fileName;
+        log.info("文件已保存到云服务器: {} -> {} (类型: {})", fileName, targetFile.toString(), category);
         
         return relativePath;
+    }
+    
+    /**
+     * 根据文件名识别文件分类（用于临时文件）
+     */
+    private String getFileCategoryFromFileName(String fileName) {
+        String extension = "";
+        if (fileName.contains(".")) {
+            extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+        }
+        
+        String[] imageExtensions = {"jpg", "jpeg", "png", "gif", "bmp", "webp", "svg", "ico"};
+        String[] videoExtensions = {"mp4", "avi", "mov", "wmv", "flv", "mkv", "rmvb", "3gp", "m4v", "webm"};
+        String[] audioExtensions = {"mp3", "wav", "wma", "ogg", "aac", "flac", "m4a"};
+        String[] documentExtensions = {"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "odt", "ods"};
+        
+        for (String ext : imageExtensions) {
+            if (extension.equals(ext)) return "image";
+        }
+        for (String ext : videoExtensions) {
+            if (extension.equals(ext)) return "video";
+        }
+        for (String ext : audioExtensions) {
+            if (extension.equals(ext)) return "audio";
+        }
+        for (String ext : documentExtensions) {
+            if (extension.equals(ext)) return "document";
+        }
+        
+        return "other";
     }
     
     /**
@@ -211,10 +247,14 @@ public class FileUploadServiceImpl implements FileUploadService {
      * 上传文件到本地服务器
      */
     private Map<String, Object> uploadToLocal(MultipartFile file, String fileType) throws IOException {
-        // 生成文件路径：按日期分目录
+        // 识别文件类型（图片、视频、文档等）
+        String category = getFileCategory(file);
+        
+        // 生成文件路径：按类型和日期分目录
+        // 格式：uploads/{类型}/{日期}/{文件名}
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
         String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        String relativePath = fileType + "/" + datePath + "/" + fileName;
+        String relativePath = category + "/" + datePath + "/" + fileName;
         
         // 完整路径
         String fullPath = defaultUploadPath + "/" + relativePath;
@@ -235,10 +275,74 @@ public class FileUploadServiceImpl implements FileUploadService {
         result.put("fileName", file.getOriginalFilename());
         result.put("fileSize", file.getSize());
         result.put("storageType", "local");
+        result.put("category", category);
         
-        log.info("文件上传成功: {} -> {}", file.getOriginalFilename(), fullPath);
+        log.info("文件上传成功: {} -> {} (类型: {})", file.getOriginalFilename(), fullPath, category);
         
         return result;
+    }
+    
+    /**
+     * 根据文件类型和扩展名识别文件分类
+     * @param file 上传的文件
+     * @return 文件分类：image(图片)、video(视频)、audio(音频)、document(文档)、other(其他)
+     */
+    private String getFileCategory(MultipartFile file) {
+        String contentType = file.getContentType();
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1).toLowerCase();
+        }
+        
+        // 根据MIME类型判断
+        if (contentType != null) {
+            if (contentType.startsWith("image/")) {
+                return "image";
+            } else if (contentType.startsWith("video/")) {
+                return "video";
+            } else if (contentType.startsWith("audio/")) {
+                return "audio";
+            } else if (contentType.contains("pdf") || 
+                      contentType.contains("word") || 
+                      contentType.contains("excel") || 
+                      contentType.contains("powerpoint") ||
+                      contentType.contains("text") ||
+                      contentType.contains("document")) {
+                return "document";
+            }
+        }
+        
+        // 根据扩展名判断（作为补充）
+        String[] imageExtensions = {"jpg", "jpeg", "png", "gif", "bmp", "webp", "svg", "ico"};
+        String[] videoExtensions = {"mp4", "avi", "mov", "wmv", "flv", "mkv", "rmvb", "3gp", "m4v", "webm"};
+        String[] audioExtensions = {"mp3", "wav", "wma", "ogg", "aac", "flac", "m4a"};
+        String[] documentExtensions = {"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "odt", "ods"};
+        
+        for (String ext : imageExtensions) {
+            if (extension.equals(ext)) {
+                return "image";
+            }
+        }
+        for (String ext : videoExtensions) {
+            if (extension.equals(ext)) {
+                return "video";
+            }
+        }
+        for (String ext : audioExtensions) {
+            if (extension.equals(ext)) {
+                return "audio";
+            }
+        }
+        for (String ext : documentExtensions) {
+            if (extension.equals(ext)) {
+                return "document";
+            }
+        }
+        
+        // 如果都不匹配，使用fileType参数（前端传入的）或默认other
+        return "other";
     }
     
     /**
@@ -246,18 +350,23 @@ public class FileUploadServiceImpl implements FileUploadService {
      */
     private String buildFileUrl(String serverAddress, String filePath) {
         if (serverAddress == null || serverAddress.isEmpty()) {
+            // 如果没有配置服务器地址，使用相对路径
             return "/uploads/" + filePath;
         }
         
-        // 确保serverAddress不以/结尾，filePath以/开头
-        if (serverAddress.endsWith("/")) {
-            serverAddress = serverAddress.substring(0, serverAddress.length() - 1);
-        }
-        if (filePath.startsWith("/")) {
-            filePath = filePath.substring(1);
+        // 如果serverAddress是HTTP/HTTPS地址，构建完整URL
+        if (serverAddress.startsWith("http://") || serverAddress.startsWith("https://")) {
+            if (serverAddress.endsWith("/")) {
+                serverAddress = serverAddress.substring(0, serverAddress.length() - 1);
+            }
+            if (filePath.startsWith("/")) {
+                filePath = filePath.substring(1);
+            }
+            return serverAddress + "/uploads/" + filePath;
         }
         
-        return serverAddress + "/" + filePath;
+        // 其他情况使用相对路径
+        return "/uploads/" + filePath;
     }
     
     /**
