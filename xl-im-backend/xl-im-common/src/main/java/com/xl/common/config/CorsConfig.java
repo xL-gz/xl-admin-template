@@ -32,9 +32,11 @@ public class CorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         
         // 从配置文件读取允许的源
+        // 注意：Spring Boot 2.4+ 中，当 allowCredentials=true 时，必须使用 addAllowedOriginPattern
+        // 而不是 addAllowedOrigin
         List<String> allowedOrigins = corsProperties.getAllowedOrigins();
         if (allowedOrigins != null && !allowedOrigins.isEmpty()) {
-            allowedOrigins.forEach(config::addAllowedOrigin);
+            allowedOrigins.forEach(config::addAllowedOriginPattern);
         }
         
         // 从配置文件读取允许的方法
