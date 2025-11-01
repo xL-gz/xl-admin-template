@@ -5,6 +5,7 @@ spring:
   application:
     name: xl-im
   # 激活的环境配置（dev: 开发环境, prod: 生产环境）
+  # 注意：生产环境启动时通过 --spring.profiles.active=prod 参数覆盖此配置
   profiles:
     active: dev
   
