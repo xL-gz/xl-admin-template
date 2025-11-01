@@ -27,7 +27,15 @@ public class SystemConfigController {
         // 获取所有配置，返回第一个（如果没有则返回默认配置）
         List<SystemConfig> configs = systemConfigService.getAll();
         if (configs != null && !configs.isEmpty()) {
-            return Result.success(configs.get(0));
+            SystemConfig config = configs.get(0);
+            // 确保数组字段不为null
+            if (config.getOssStorageConfigs() == null) {
+                config.setOssStorageConfigs(new java.util.ArrayList<>());
+            }
+            if (config.getCloudServerStorageConfigs() == null) {
+                config.setCloudServerStorageConfigs(new java.util.ArrayList<>());
+            }
+            return Result.success(config);
         }
         // 如果没有配置，返回一个默认配置
         SystemConfig defaultConfig = new SystemConfig();
@@ -36,6 +44,9 @@ public class SystemConfigController {
         defaultConfig.setSysVersion("1.0.0");
         defaultConfig.setCopyright("Copyright © 2025 XL");
         defaultConfig.setMandatoryModificationOfInitialPassword(0);
+        // 初始化数组字段
+        defaultConfig.setOssStorageConfigs(new java.util.ArrayList<>());
+        defaultConfig.setCloudServerStorageConfigs(new java.util.ArrayList<>());
         return Result.success(defaultConfig);
     }
     
@@ -44,7 +55,56 @@ public class SystemConfigController {
      */
     @PutMapping("/api/system/SysConfig")
     public Result<SystemConfig> updateSysConfig(@RequestBody SystemConfig systemConfig) {
+        // 打印接收到的数据
+        System.out.println("=== 接收到的配置数据 ===");
+        System.out.println("ID: " + systemConfig.getId());
+        System.out.println("云服务器配置数量: " + (systemConfig.getCloudServerStorageConfigs() != null ? systemConfig.getCloudServerStorageConfigs().size() : 0));
+        if (systemConfig.getCloudServerStorageConfigs() != null) {
+            systemConfig.getCloudServerStorageConfigs().forEach(config -> {
+                System.out.println("  - 名称: " + config.getName() + ", 路径: " + config.getStoragePath());
+            });
+        }
+        
+        // 确保ID存在，如果没有则设置默认ID
+        if (systemConfig.getId() == null || systemConfig.getId().isEmpty()) {
+            List<SystemConfig> existingConfigs = systemConfigService.getAll();
+            if (existingConfigs != null && !existingConfigs.isEmpty()) {
+                // 使用现有配置的ID
+                systemConfig.setId(existingConfigs.get(0).getId());
+            } else {
+                // 新建配置，使用默认ID
+                systemConfig.setId("default_config");
+            }
+        }
+        
+        // 确保数组字段不为null
+        if (systemConfig.getOssStorageConfigs() == null) {
+            systemConfig.setOssStorageConfigs(new java.util.ArrayList<>());
+        }
+        if (systemConfig.getCloudServerStorageConfigs() == null) {
+            systemConfig.setCloudServerStorageConfigs(new java.util.ArrayList<>());
+        }
+        
         SystemConfig savedConfig = systemConfigService.save(systemConfig);
+        
+        // 打印保存后的数据
+        System.out.println("=== 保存后的配置数据 ===");
+        System.out.println("ID: " + savedConfig.getId());
+        System.out.println("云服务器配置数量: " + (savedConfig.getCloudServerStorageConfigs() != null ? savedConfig.getCloudServerStorageConfigs().size() : 0));
+        if (savedConfig.getCloudServerStorageConfigs() != null) {
+            savedConfig.getCloudServerStorageConfigs().forEach(config -> {
+                System.out.println("  - 名称: " + config.getName() + ", 路径: " + config.getStoragePath());
+            });
+        }
+        
+        // 确保返回的数据中数组字段不为null
+        if (savedConfig.getOssStorageConfigs() == null) {
+            savedConfig.setOssStorageConfigs(new java.util.ArrayList<>());
+        }
+        if (savedConfig.getCloudServerStorageConfigs() == null) {
+            savedConfig.setCloudServerStorageConfigs(new java.util.ArrayList<>());
+        }
+        
         return Result.success(savedConfig, "更新成功");
     }
     

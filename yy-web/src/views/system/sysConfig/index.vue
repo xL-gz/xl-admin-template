@@ -192,7 +192,7 @@
                   <a-col :span="24" v-if="!baseForm.ossStorageConfigs || baseForm.ossStorageConfigs.length === 0">
                     <a-empty description="暂无OSS配置，点击上方按钮添加" />
                   </a-col>
-                  <a-col :span="24" v-for="(ossConfig, index) in baseForm.ossStorageConfigs" :key="index" class="storage-config-item">
+                  <a-col :span="24" v-for="(ossConfig, index) in baseForm.ossStorageConfigs" :key="`oss-${index}`" class="storage-config-item">
                     <a-card :title="ossConfig.name || `OSS配置 ${index + 1}`" class="storage-card">
                       <template #extra>
                         <a-space>
@@ -268,7 +268,7 @@
                   <a-col :span="24" v-if="!baseForm.cloudServerStorageConfigs || baseForm.cloudServerStorageConfigs.length === 0">
                     <a-empty description="暂无云服务器配置，点击上方按钮添加" />
                   </a-col>
-                  <a-col :span="24" v-for="(cloudConfig, index) in baseForm.cloudServerStorageConfigs" :key="index" class="storage-config-item">
+                  <a-col :span="24" v-for="(cloudConfig, index) in baseForm.cloudServerStorageConfigs" :key="`cloud-${index}`" class="storage-config-item">
                     <a-card :title="cloudConfig.name || `云服务器配置 ${index + 1}`" class="storage-card">
                       <template #extra>
                         <a-space>
@@ -361,7 +361,24 @@
 
   function initData() {
     getSysConfig().then(res => {
-      state.baseForm = res.data || {};
+      const data = res.data || {};
+      // 确保数组字段被正确初始化
+      if (!data.ossStorageConfigs) {
+        data.ossStorageConfigs = [];
+      }
+      if (!data.cloudServerStorageConfigs) {
+        data.cloudServerStorageConfigs = [];
+      }
+      state.baseForm = data;
+      console.log('加载的数据:', JSON.stringify(data, null, 2));
+      console.log('云服务器配置数量:', data.cloudServerStorageConfigs?.length || 0);
+    }).catch(err => {
+      console.error('获取系统配置失败:', err);
+      // 即使失败也要初始化空数组
+      state.baseForm = {
+        ossStorageConfigs: [],
+        cloudServerStorageConfigs: []
+      };
     });
   }
 
@@ -372,6 +389,14 @@
       content: '您确定要保存，是否继续?',
       onOk: () => {
         state.btnLoading = true;
+        // 确保数组字段存在
+        if (!state.baseForm.ossStorageConfigs) {
+          state.baseForm.ossStorageConfigs = [];
+        }
+        if (!state.baseForm.cloudServerStorageConfigs) {
+          state.baseForm.cloudServerStorageConfigs = [];
+        }
+        console.log('保存的数据:', JSON.stringify(state.baseForm, null, 2));
         update(state.baseForm)
           .then(res => {
             createMessage.success(res.msg);
@@ -385,10 +410,15 @@
               title: state.baseForm.title,
             };
             appStore.setProjectConfig({ sysConfigInfo });
-            initData();
+            // 保存后重新加载数据
+            setTimeout(() => {
+              initData();
+            }, 300);
           })
-          .catch(() => {
+          .catch((err) => {
+            console.error('保存失败:', err);
             state.btnLoading = false;
+            createMessage.error('保存失败，请检查控制台错误信息');
           });
       },
     });

@@ -3,6 +3,7 @@ package com.xl.system.entity;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.mapping.Field;
 import java.util.List;
 
 /**
@@ -54,9 +55,11 @@ public class SystemConfig {
     private String workLogoIcon;             // 工作台LOGO图标
     
     // 文件存储配置 - OSS存储配置列表
+    @Field("ossStorageConfigs")
     private List<OssStorageConfig> ossStorageConfigs;
     
     // 文件存储配置 - 云服务器存储配置列表
+    @Field("cloudServerStorageConfigs")
     private List<CloudServerStorageConfig> cloudServerStorageConfigs;
     
     /**
