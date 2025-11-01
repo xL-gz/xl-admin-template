@@ -61,3 +61,13 @@ sa-token:
   token-style: uuid
   # 是否输出操作日志
   is-log: false
+
+# 文件上传配置
+file:
+  upload:
+    # 本地存储路径（相对路径或绝对路径）
+    path: ./uploads
+    # 文件访问基础URL（本地存储时使用）
+    base-url: http://localhost:20250/uploads
+    # 最大文件大小（字节），默认10MB
+    max-size: 10485760
