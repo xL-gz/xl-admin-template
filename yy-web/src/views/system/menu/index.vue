@@ -3,15 +3,15 @@
     <div class="youyi-content-wrapper-center">
       <div class="youyi-content-wrapper-content">
         <!-- 三层架构说明提示 -->
-        <a-alert 
-          type="info" 
-          show-icon 
+        <a-alert
+          type="info"
+          show-icon
           closable
           class="mb-4"
           message="三层架构权限管理"
           description="本系统采用三层架构：应用系统 → 菜单 → 权限。您可以为每个应用系统配置独立的菜单和权限体系。点击「菜单管理」进入第二层配置。">
           <template #icon>
-            <i class="icon-ym icon-ym-generator-info" />
+            <i class="icon-ym icon-ym-generator-info"></i>
           </template>
         </a-alert>
 
@@ -21,14 +21,12 @@
               {{ t('common.addText') }}
             </a-button>
             <a-tooltip title="查看三层架构使用指南">
-              <a-button preIcon="icon-ym icon-ym-generator-help" @click="showGuide">
-                使用指南
-              </a-button>
+              <a-button preIcon="icon-ym icon-ym-generator-help" @click="showGuide">使用指南</a-button>
             </a-tooltip>
           </template>
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'icon'">
-              <i :class="record.icon + ' table-icon'" />
+              <i :class="record.icon + ' table-icon'"></i>
             </template>
             <template v-if="column.key === 'enabledMark'">
               <a-tag :color="record.enabledMark == 1 ? 'success' : 'error'">{{ record.enabledMark == 1 ? '启用' : '禁用' }}</a-tag>
@@ -48,13 +46,9 @@
     <Form @register="registerForm" @reload="reload" />
     <Menu @register="registerMenu" />
     <Portal @register="registerPortal" />
-    
+
     <!-- 使用指南弹窗 -->
-    <BasicModal 
-      v-model:open="guideVisible" 
-      title="三层架构权限使用指南" 
-      width="900px"
-      :footer="null">
+    <BasicModal v-model:open="guideVisible" title="三层架构权限使用指南" width="900px" :footer="null">
       <div class="guide-content">
         <a-typography-title :level="4">📋 架构说明</a-typography-title>
         <a-typography-paragraph>
@@ -81,27 +75,17 @@
 
         <a-typography-title :level="4">✅ 权限类型</a-typography-title>
         <a-descriptions bordered size="small" :column="1">
-          <a-descriptions-item label="按钮权限（Button）">
-            控制页面上的操作按钮，如：新增、编辑、删除、导出等
-          </a-descriptions-item>
-          <a-descriptions-item label="列表权限（Column）">
-            控制表格显示的列，可以隐藏敏感列
-          </a-descriptions-item>
-          <a-descriptions-item label="表单权限（Form）">
-            控制表单字段的显示和编辑，可以隐藏或只读敏感字段
-          </a-descriptions-item>
-          <a-descriptions-item label="数据权限（Data）">
-            控制数据范围，如：本部门数据、个人数据等
-          </a-descriptions-item>
+          <a-descriptions-item label="按钮权限（Button）">控制页面上的操作按钮，如：新增、编辑、删除、导出等</a-descriptions-item>
+          <a-descriptions-item label="列表权限（Column）">控制表格显示的列，可以隐藏敏感列</a-descriptions-item>
+          <a-descriptions-item label="表单权限（Form）">控制表单字段的显示和编辑，可以隐藏或只读敏感字段</a-descriptions-item>
+          <a-descriptions-item label="数据权限（Data）">控制数据范围，如：本部门数据、个人数据等</a-descriptions-item>
         </a-descriptions>
 
         <a-divider />
 
         <a-typography-paragraph>
           <a-space>
-            <a-button type="link" href="/yy-web/三层架构权限使用指南.md" target="_blank">
-              查看完整文档
-            </a-button>
+            <a-button type="link" href="/yy-web/三层架构权限使用指南.md" target="_blank">查看完整文档</a-button>
           </a-space>
         </a-typography-paragraph>
       </div>
@@ -121,12 +105,12 @@
   import Menu from './components/menu/index.vue';
   import Portal from './components/portal/index.vue';
 
-  defineOptions({ name: 'system-menu' });
+  defineOptions({ name: 'SystemMenu' });
 
   const { t } = useI18n();
   const { createMessage } = useMessage();
   const guideVisible = ref(false);
-  
+
   const columns: BasicColumn[] = [
     { title: '应用名称', dataIndex: 'fullName', width: 200 },
     { title: '应用编码', dataIndex: 'enCode', width: 200 },
@@ -179,7 +163,7 @@
   function getTableActions(record): ActionItem[] {
     return [
       {
-        label: '菜单管理',  // 把菜单管理放到主要操作按钮中
+        label: '菜单管理', // 把菜单管理放到主要操作按钮中
         onClick: handleMenu.bind(null, record),
         color: 'success',
       },
@@ -195,13 +179,14 @@
         label: t('common.delText'),
         color: 'error',
         disabled: record.isMain == 1,
-        popConfirm: {  // 使用 popConfirm 而不是 modelConfirm
+        popConfirm: {
+          // 使用 popConfirm 而不是 modelConfirm
           title: '确定删除该应用系统吗？',
           confirm: handleDelete.bind(null, record.id),
         },
       },
       {
-        ifShow: !record.isMain,  // 只有非主系统才显示门户管理
+        ifShow: !record.isMain, // 只有非主系统才显示门户管理
         label: '门户管理',
         onClick: handlePortal.bind(null, record),
       },
@@ -211,20 +196,22 @@
     openFormModal(true, { id });
   }
   function handleMenu(record) {
-    openMenuPopup(true, { id: record.id, title: record.fullName, isDevPlatform: !!record.isMain });  // 修复：使用 isMain
+    openMenuPopup(true, { id: record.id, title: record.fullName, isDevPlatform: !!record.isMain }); // 修复：使用 isMain
   }
   function handlePortal(record) {
     openPortalPopup(true, { id: record.id, title: record.fullName });
   }
   function handleDelete(id) {
-    delSystem(id).then(res => {
-      createMessage.success(res.msg || res.message || '删除成功');
-      reload();
-    }).catch((error) => {
-      // axios 拦截器已经处理了错误提示（在 transformResponseHook 中），这里只做错误捕获
-      // 避免重复显示错误提示
-      console.error('删除失败:', error);
-    });
+    delSystem(id)
+      .then(res => {
+        createMessage.success(res.msg || res.message || '删除成功');
+        reload();
+      })
+      .catch(error => {
+        // axios 拦截器已经处理了错误提示（在 transformResponseHook 中），这里只做错误捕获
+        // 避免重复显示错误提示
+        console.error('删除失败:', error);
+      });
   }
   function showGuide() {
     guideVisible.value = true;
@@ -232,14 +219,14 @@
 </script>
 
 <style scoped>
-.guide-content {
-  padding: 20px;
-}
-.guide-content ol {
-  padding-left: 20px;
-}
-.guide-content ol li {
-  margin-bottom: 8px;
-  line-height: 1.8;
-}
+  .guide-content {
+    padding: 20px;
+  }
+  .guide-content ol {
+    padding-left: 20px;
+  }
+  .guide-content ol li {
+    margin-bottom: 8px;
+    line-height: 1.8;
+  }
 </style>
