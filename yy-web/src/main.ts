@@ -1,9 +1,19 @@
+/**
+ * 应用入口文件
+ * 
+ * 功能说明：
+ * 1. 引入全局样式：Ant Design样式、Windi CSS、自定义样式
+ * 2. 初始化应用配置：状态管理、路由、国际化、全局组件等
+ * 3. 配置全局功能：错误处理、指令、路由守卫
+ * 4. 挂载应用到DOM
+ */
+
 import 'ant-design-vue/dist/reset.css';
 import '@/design/index.less';
 import '@/design/windi-base.css';
 import 'virtual:windi-components.css';
 import 'virtual:windi-utilities.css';
-// Register icon sprite
+// 注册SVG图标精灵
 import 'virtual:svg-icons-register';
 import App from './App.vue';
 import { createApp } from 'vue';
@@ -23,50 +33,46 @@ disAutoConnect();
 
 const emitter = mitt();
 
+/**
+ * 启动应用初始化函数
+ * 按顺序初始化各项功能模块
+ */
 async function bootstrap() {
   const app = createApp(App);
 
-  app.provide('emitter', emitter); // 注入provider
+  // 注入事件发射器provider
+  app.provide('emitter', emitter);
 
-  // Configure store
-  // 配置 store
+  // 配置Pinia状态管理
   setupStore(app);
 
-  // Initialize internal system configuration
-  // 初始化内部系统配置
+  // 初始化内部系统配置（主题、缓存等）
   initAppConfigStore();
 
-  // Register global components
-  // 注册全局组件
+  // 注册全局组件（如BasicButton、BasicModal等）
   registerGlobComp(app);
 
-  // Multilingual configuration
   // 多语言配置
-  // Asynchronous case: language files may be obtained from the server side
-  // 异步案例：语言文件可能从服务器端获取
   await setupI18n(app);
 
-  // Configure routing
   // 配置路由
   setupRouter(app);
 
-  // router-guard
-  // 路由守卫
+  // 路由守卫配置（权限验证、进度条等）
   setupRouterGuard(router);
 
-  // Register global directive
-  // 注册全局指令
+  // 注册全局指令（v-permission、v-debounce等）
   setupGlobDirectives(app);
 
-  // Configure global error handling
   // 配置全局错误处理
   setupErrorHandle(app);
 
-  // https://next.router.vuejs.org/api/#isready
-  // await router.isReady();
+  // 使用网格布局插件
   app.use(gridLayout);
 
+  // 挂载应用到DOM
   app.mount('#app');
 }
 
+// 启动应用
 bootstrap();

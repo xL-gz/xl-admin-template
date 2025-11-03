@@ -1,3 +1,12 @@
+<!--
+  应用根组件
+  功能说明：
+  1. 全局主题配置：支持亮色/暗色模式切换
+  2. 多语言配置：集成Ant Design国际化
+  3. 动态主题色：根据配置动态切换主题色
+  4. 系统背景：支持多种系统背景切换
+  5. 路由视图：渲染当前路由对应的页面
+-->
 <template>
   <ConfigProvider :theme="appTheme" :locale="getAntdLocale">
     <AppProvider>

@@ -1,3 +1,14 @@
+<!--
+  应用提供者组件（应用级上下文组件）
+  
+  功能说明：
+  1. 为应用提供全局上下文数据（如isMobile、prefixCls）
+  2. 监听屏幕断点变化，自动处理移动端适配
+  3. 在移动端和PC端之间切换时，保存和恢复菜单状态
+  4. 所有子组件可通过AppContext访问全局状态
+  
+  使用位置：App.vue的根组件
+-->
 <script lang="ts">
   import { defineComponent, toRefs, ref, unref } from 'vue';
   import { createAppProviderContext } from './useAppContext';

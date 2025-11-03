@@ -1,3 +1,15 @@
+<!--
+  帮助提示组件
+  
+  功能说明：
+  1. 显示问号图标，鼠标悬停显示帮助信息
+  2. 支持单行或多行帮助文本
+  3. 支持自定义样式和位置
+  
+  使用示例：
+  <BasicHelp text="这是帮助信息" />
+  <BasicHelp :text="['提示1', '提示2']" :showIndex="true" />
+-->
 <script lang="tsx">
   import type { CSSProperties, PropType } from 'vue';
   import { defineComponent, computed, unref } from 'vue';

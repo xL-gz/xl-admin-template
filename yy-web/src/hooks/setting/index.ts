@@ -10,24 +10,24 @@ import { getAppEnvConfig, isDevMode } from '@/utils/env';
 function getConfiguredApiUrl(): string {
   const apiServerType = localStorage.getItem('apiServerType');
   const apiBaseUrl = localStorage.getItem('apiBaseUrl');
-  
+
   // 如果是本地服务器类型，使用默认本地地址（无论apiBaseUrl是否存在）
   if (apiServerType === 'local') {
     return 'http://localhost:20250';
   }
-  
+
   // 如果配置了自定义API地址（remote或custom类型），使用自定义地址
   if (apiBaseUrl && apiBaseUrl.trim()) {
     return apiBaseUrl.trim();
   }
-  
+
   // 其他情况使用环境变量配置的地址
   const { VITE_GLOB_API_URL } = getAppEnvConfig();
   return VITE_GLOB_API_URL || 'http://localhost:20250';
 }
 
 export const useGlobSetting = (): Readonly<GlobConfig> => {
-  const { VITE_GLOB_APP_TITLE, VITE_GLOB_API_URL, VITE_GLOB_APP_SHORT_NAME, VITE_GLOB_API_URL_PREFIX, VITE_GLOB_WEBSOCKET_URL } = getAppEnvConfig();
+  const { VITE_GLOB_APP_TITLE, VITE_GLOB_APP_SHORT_NAME, VITE_GLOB_API_URL_PREFIX, VITE_GLOB_WEBSOCKET_URL } = getAppEnvConfig();
 
   if (!/[a-zA-Z\_]*/.test(VITE_GLOB_APP_SHORT_NAME)) {
     warn(`VITE_GLOB_APP_SHORT_NAME Variables can only be characters/underscores, please modify in the environment variables and re-running.`);

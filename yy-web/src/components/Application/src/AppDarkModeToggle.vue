@@ -1,3 +1,14 @@
+<!--
+  深色模式切换组件
+  
+  功能说明：
+  1. 切换亮色/暗色主题模式
+  2. 支持平滑过渡动画
+  3. 自动更新头部和侧边栏背景色
+  4. 设置信息自动保存
+  
+  使用位置：系统设置、头部工具栏
+-->
 <template>
   <div v-if="getShowDarkModeToggle" :class="getClass" @click="toggleDarkMode">
     <div :class="`${prefixCls}-inner`"></div>

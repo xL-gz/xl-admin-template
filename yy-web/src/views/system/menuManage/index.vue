@@ -1,3 +1,14 @@
+<!--
+  菜单管理页面
+  
+  功能说明：
+  1. 管理系统菜单的增删改查
+  2. 支持菜单图标、编码、类型配置
+  3. 支持启用/禁用菜单
+  4. 显示菜单层级结构
+  
+  路由路径：/system/menuManage
+-->
 <template>
   <div class="youyi-content-wrapper">
     <div class="youyi-content-wrapper-center">

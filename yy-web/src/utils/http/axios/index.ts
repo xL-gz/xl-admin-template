@@ -1,5 +1,17 @@
-// axios配置  可自行根据项目进行更改，只需更改该文件即可，其他文件可以不动
-// The axios configuration can be changed according to the project, just change the file, other files can be left unchanged
+/**
+ * Axios HTTP请求配置和封装
+ * 
+ * 功能说明：
+ * 1. 配置Axios实例，包括拦截器、错误处理、重试机制
+ * 2. 请求拦截器：自动添加Token、处理参数、加密数据
+ * 3. 响应拦截器：数据解密、状态码处理、错误提示
+ * 4. 支持动态API地址切换（本地/远程/自定义）
+ * 5. 支持请求重试、超时处理、错误日志记录
+ * 
+ * 使用示例：
+ * import { defHttp } from '@/utils/http/axios';
+ * const data = await defHttp.get({ url: '/api/user/info' });
+ */
 
 import type { AxiosInstance, AxiosResponse } from 'axios';
 import { clone } from 'lodash-es';

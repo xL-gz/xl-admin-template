@@ -1,3 +1,17 @@
+<!--
+  基础按钮组件（封装了Ant Design Vue的Button）
+  
+  功能说明：
+  1. 基于Ant Design Button的封装
+  2. 支持前置和后置图标
+  3. 支持自定义颜色和类型
+  4. 继承所有Button的原生属性
+  
+  使用示例：
+  <BasicButton type="primary">确认</BasicButton>
+  <BasicButton preIcon="icon-search">搜索</BasicButton>
+  <BasicButton color="warning" type="error">危险操作</BasicButton>
+-->
 <template>
   <Button v-bind="getBindValue" :class="getButtonClass" @click="onClick">
     <template #icon v-if="$slots.icon || preIcon">

@@ -1,6 +1,6 @@
 import { Input, DatePicker } from 'ant-design-vue';
 
-// youyi 组件
+// 自定义业务组件库（基于 Ant Design Vue 封装）
 import { BasicCaption } from '@/components/Basic';
 import { YouyiAlert } from '@/components/Youyi/Alert';
 import { YouyiAreaSelect } from '@/components/Youyi/AreaSelect';

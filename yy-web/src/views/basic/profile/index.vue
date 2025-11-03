@@ -1,3 +1,16 @@
+<!--
+  个人中心页面
+  
+  功能说明：
+  1. 个人信息查看和编辑
+  2. 修改密码
+  3. 租户信息查看（多租户模式）
+  4. 我的组织/岗位切换
+  5. 我的下属管理
+  6. 系统日志查看
+  
+  路由路径：/profile
+-->
 <template>
   <div class="youyi-content-wrapper profile-wrapper bg-white">
     <a-tabs v-model:activeKey="activeKey" tab-position="left" class="common-left-tabs profile-left-tabs" destroyInactiveTabPane>

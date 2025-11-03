@@ -1,3 +1,16 @@
+<!--
+  箭头图标组件
+  
+  功能说明：
+  1. 显示可折叠/展开的箭头图标
+  2. 支持向上、向下、激活状态切换
+  3. 带旋转动画效果
+  
+  使用示例：
+  <BasicArrow :expand="isExpand" />
+  <BasicArrow up />
+  <BasicArrow down :expand="true" />
+-->
 <template>
   <span :class="getClass">
     <DownOutlined :style="getStyle" />

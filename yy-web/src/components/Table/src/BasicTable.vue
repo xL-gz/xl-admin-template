@@ -1,3 +1,16 @@
+<!--
+  基础表格组件（封装了Ant Design Vue的Table）
+  
+  功能说明：
+  1. 集成搜索表单和表格展示
+  2. 支持分页、排序、筛选、选择等常见功能
+  3. 支持自定义列设置、自适应高度
+  4. 支持表格编辑、行展开、行选择
+  5. 提供丰富的插槽和事件
+  
+  使用示例：
+  <BasicTable @register="registerTable" :columns="columns" />
+-->
 <template>
   <div ref="wrapRef" :class="getWrapperClass">
     <BasicForm

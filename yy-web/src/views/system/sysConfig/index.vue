@@ -1,3 +1,14 @@
+<!--
+  系统配置管理页面
+  
+  功能说明：
+  1. 基本设置：系统图标、标题、版本、公司信息等
+  2. 安全设置：登录策略、密码策略、白名单验证
+  3. 文件存储配置：OSS存储、云服务器存储配置
+  4. API服务器配置：切换本地/远程/自定义服务器地址
+  
+  路由路径：/system/sysConfig
+-->
 <template>
   <div class="youyi-content-wrapper">
     <div class="youyi-content-wrapper-center bg-white">

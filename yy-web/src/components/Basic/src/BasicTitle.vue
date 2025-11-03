@@ -1,3 +1,16 @@
+<!--
+  基础标题组件
+  
+  功能说明：
+  1. 显示文本标题，支持左侧彩色标记条
+  2. 支持帮助文本提示（带问号图标）
+  3. 支持自定义样式（加粗、普通、显示标记条）
+  
+  使用示例：
+  <BasicTitle span>标题</BasicTitle>
+  <BasicTitle :helpMessage="'帮助信息'">标题</BasicTitle>
+  <BasicTitle normal>普通标题</BasicTitle>
+-->
 <template>
   <span :class="getClass">
     <slot></slot>

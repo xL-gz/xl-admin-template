@@ -1,10 +1,10 @@
 {
-  "name": "youyi-web-vue3",
+  "name": "xl-admin-web",
   "version": "5.0.0",
-  "description": "YOUYI即时通讯",
+  "description": "XL企业级后台管理系统",
   "author": {
-    "name": "tfy",
-    "email": "suppt@yqq.com",
+    "name": "XL Team",
+    "email": "",
     "url": ""
   },
   "homepage": "",

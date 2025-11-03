@@ -1,3 +1,14 @@
+<!--
+  应用Logo组件
+  
+  功能说明：
+  1. 显示系统Logo图标
+  2. 支持显示完整Logo或仅图标
+  3. 点击Logo跳转到首页
+  4. 支持从系统配置动态读取Logo地址
+  
+  使用位置：侧边栏顶部、登录页面
+-->
 <template>
   <div class="anticon" :class="getAppLogoClass" @click="goHome">
     <template v-if="showTitle">
