@@ -2,7 +2,6 @@ package com.xl.admin.controller;
 
 import com.xl.common.result.Result;
 import com.xl.system.dto.MenuDTO;
-import com.xl.system.entity.Menu;
 import com.xl.system.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

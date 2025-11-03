@@ -42,6 +42,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     }
     
     @Override
+    @SuppressWarnings("unchecked")
     public List<MenuDTO> selectMenuTreeList() {
         LambdaQueryWrapper<Menu> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Menu::getDeleted, 0)
@@ -121,6 +122,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     }
     
     @Override
+    @SuppressWarnings("unchecked")
     public List<MenuDTO> selectMenuTreeBySystemId(String systemId, String keyword, String category, Integer type, Integer enabledMark) {
         LambdaQueryWrapper<Menu> wrapper = new LambdaQueryWrapper<>();
         
@@ -163,6 +165,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     }
     
     @Override
+    @SuppressWarnings("unchecked")
     public List<MenuDTO> selectMenuSelectorBySystemId(Long parentId, String systemId) {
         LambdaQueryWrapper<Menu> wrapper = new LambdaQueryWrapper<>();
         
@@ -178,11 +181,6 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
                .orderByAsc(Menu::getSortCode, Menu::getOrderNum);
         
         List<Menu> menus = this.list(wrapper);
-        
-        // 转换为DTO
-        List<MenuDTO> menuDTOs = menus.stream()
-                .map(menu -> BeanUtil.copyProperties(menu, MenuDTO.class))
-                .collect(Collectors.toList());
         
         // 构建树形结构
         return buildMenuTree(menus);
