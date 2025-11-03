@@ -108,8 +108,31 @@
       field: 'parentId',
       label: '上级',
       component: 'TreeSelect',
-      componentProps: { placeholder: '请选择', onChange: onParentIdChange },
-      rules: [{ required: true, message: '必填', trigger: 'change' }],
+      componentProps: {
+        placeholder: '请选择',
+        onChange: onParentIdChange,
+        showSearch: true,
+        showIcon: true,
+        treeDefaultExpandAll: true,
+        allowClear: true,
+        dropdownMatchSelectWidth: false,
+        treeNodeFilterProp: 'fullName',
+      },
+      rules: [
+        {
+          required: true,
+          message: '必填',
+          trigger: ['change', 'blur'],
+          validator: (_rule: any, value: any) => {
+            // TreeSelect 的值可能是字符串 '-1' 或数字，都需要通过验证
+            if (value === undefined || value === null || value === '') {
+              return Promise.reject('请选择上级菜单');
+            }
+            // '-1' 表示顶级节点，数字表示具体的菜单ID，都应该通过验证
+            return Promise.resolve();
+          },
+        },
+      ],
     },
     {
       field: 'fullName',
@@ -185,12 +208,16 @@
   const { createMessage } = useMessage();
   const baseStore = useBaseStore();
   const { t } = useI18n();
-  const [registerForm, { setFieldsValue, validate, clearValidate, resetFields, updateSchema, getFieldsValue }] = useForm({ labelWidth: 80, schemas: schemas });
+  const [registerForm, { setFieldsValue, validate, validateFields, clearValidate, resetFields, updateSchema, getFieldsValue }] = useForm({
+    labelWidth: 80,
+    schemas: schemas,
+  });
   const [registerModal, { closeModal, changeLoading, changeOkLoading }] = useModalInner(init);
 
   function init(data) {
     resetFields();
-    state.id = data.id;
+    // 确保 ID 类型正确（字符串或数字都可以）
+    state.id = data.id ? (typeof data.id === 'string' ? data.id : String(data.id)) : '';
     state.category = data.category;
     state.systemId = data.systemId;
     state.featureWebData = [];
@@ -200,34 +227,119 @@
     state.portalData = [];
     state.flowData = [];
     updateSchema({ field: 'type', componentProps: { options: state.category === 'App' ? appTypeData : typeData } });
-    getMenuSelectorList(state.category, state.id, state.systemId);
-    if (data.parentId) setFieldsValue({ parentId: data.parentId });
+    // getMenuSelectorList 需要字符串类型的 id 或者 '0'
+    const selectorId = state.id ? String(state.id) : '0';
+    getMenuSelectorList(state.category, selectorId, state.systemId);
+
+    // 如果是新建且有传入的 parentId，先设置（但要等到获取菜单详情后再统一设置）
+    // 注意：如果 parentId 是 0，表示顶级节点，应该转换为 '-1' 或保持为 0
     if (state.id) {
       changeLoading(true);
-      getInfo(state.id).then(res => {
-        const data = res.data;
-        const propertyJson = data.propertyJson ? JSON.parse(data.propertyJson) : null;
-        data.propertyJson = propertyJson || { moduleId: '', iconBackgroundColor: '' };
-        data.moduleId = data.propertyJson.moduleId;
-        const menuType = data.type;
+      // 确保传递给 getInfo 的 id 是正确的类型
+      const menuId = typeof state.id === 'string' ? Number(state.id) : state.id;
+      getInfo(menuId).then(res => {
+        const menuData = res.data;
+        const propertyJson = menuData.propertyJson ? JSON.parse(menuData.propertyJson) : null;
+        menuData.propertyJson = propertyJson || { moduleId: '', iconBackgroundColor: '' };
+        menuData.moduleId = menuData.propertyJson.moduleId;
+        const menuType = menuData.type;
         if ([2, 3, 4, 9].includes(menuType)) {
-          data.isButtonAuthorize = 1;
-          data.isColumnAuthorize = 1;
-          data.isFormAuthorize = 1;
-          data.isDataAuthorize = 1;
+          menuData.isButtonAuthorize = 1;
+          menuData.isColumnAuthorize = 1;
+          menuData.isFormAuthorize = 1;
+          menuData.isDataAuthorize = 1;
         }
-        data.oldUrlAddress = res.data.urlAddress;
-        handleHelp(data.type);
+        menuData.oldUrlAddress = res.data.urlAddress;
+        handleHelp(menuData.type);
         switchType(menuType);
-        state.dataForm = data;
-        setFieldsValue(data);
+        state.dataForm = menuData;
+
+        // 处理 parentId：如果是 0 或 null，转换为 '-1'（顶级节点），否则转换为字符串
+        if (menuData.parentId === 0 || menuData.parentId === null || menuData.parentId === undefined) {
+          menuData.parentId = '-1'; // 顶级节点
+        } else {
+          // 确保 parentId 是字符串类型，以便 TreeSelect 组件正确识别
+          menuData.parentId = String(menuData.parentId);
+        }
+
+        console.log('加载菜单数据 - parentId:', menuData.parentId);
+        setFieldsValue(menuData);
         changeLoading(false);
       });
+    } else {
+      // 新建菜单时，如果有传入的 parentId，设置它
+      // 如果没有传入或 parentId 是 0，设置为 '-1' 表示顶级节点
+      if (data.parentId && data.parentId !== 0 && data.parentId !== '0') {
+        const parentIdValue = String(data.parentId);
+        setFieldsValue({ parentId: parentIdValue });
+        console.log('新建菜单 - 设置 parentId:', parentIdValue);
+      } else {
+        // 默认设置为顶级节点
+        setFieldsValue({ parentId: '-1' });
+        console.log('新建菜单 - 默认 parentId: -1 (顶级节点)');
+      }
     }
   }
   async function handleSubmit() {
-    const values = await validate();
-    if (!values) return;
+    // 使用 nextTick 确保表单值已经更新
+    await nextTick();
+
+    let values;
+    try {
+      // 先获取当前表单值，查看是否有值
+      const currentValues = getFieldsValue();
+      console.log('提交前表单值:', currentValues);
+      console.log('提交前 parentId:', currentValues.parentId);
+
+      // 确保 parentId 有值，如果没有则尝试从表单模型中获取
+      if (!currentValues.parentId && currentValues.parentId !== 0 && currentValues.parentId !== '-1') {
+        console.warn('parentId 为空，尝试从表单模型获取');
+      }
+
+      values = await validate();
+      if (!values) {
+        console.warn('表单验证失败，请检查必填项');
+        const failedValues = getFieldsValue();
+        console.warn('验证失败时的表单值:', failedValues);
+        console.warn('验证失败时的 parentId:', failedValues.parentId);
+
+        // 检查具体哪些字段验证失败
+        try {
+          await validateFields(['parentId']);
+        } catch (fieldError: any) {
+          console.error('parentId 字段验证错误:', fieldError);
+          if (fieldError?.errorFields && Array.isArray(fieldError.errorFields)) {
+            fieldError.errorFields.forEach((field: any) => {
+              console.error('验证失败的字段名:', field.name);
+              console.error('验证失败的错误信息:', field.errors);
+            });
+          }
+        }
+
+        createMessage.warning('请完善必填信息');
+        return;
+      }
+      console.log('验证通过的表单值:', values);
+      console.log('验证通过的 parentId:', values.parentId);
+    } catch (error: any) {
+      console.error('表单验证出错:', error);
+      console.error('验证错误详情:', error.errorFields || error);
+      // 显示具体的验证错误信息
+      if (error?.errorFields && Array.isArray(error.errorFields)) {
+        const errorMessages = error.errorFields
+          .map((field: any) => {
+            const fieldName = field.name?.join('.') || field.field || '未知字段';
+            const errors = field.errors?.join(', ') || '验证失败';
+            return `${fieldName}: ${errors}`;
+          })
+          .join('; ');
+        console.error('验证失败的字段:', errorMessages);
+        createMessage.error(`表单验证失败: ${errorMessages}`);
+      } else {
+        createMessage.error('表单验证失败，请检查输入内容');
+      }
+      return;
+    }
 
     // 确保编辑模式下有 id
     if (state.id && typeof state.id === 'string' && !state.id.trim()) {
@@ -298,10 +410,12 @@
         console.log('提交成功，响应:', res);
         createMessage.success(res?.msg || res?.message || (state.id ? '更新成功' : '创建成功'));
         changeOkLoading(false);
-        emit('reload');
+        // 先关闭弹窗，再刷新表格
+        closeModal();
+        // 延迟一下确保弹窗完全关闭后再刷新
         setTimeout(() => {
-          closeModal();
-        }, 200);
+          emit('reload');
+        }, 300);
       })
       .catch(error => {
         console.error('提交失败:', error);
@@ -353,17 +467,38 @@
   function handleHelp(val) {
     updateSchema([{ field: 'urlAddress', helpMessage: val === 7 ? '地址以http://或https://为开头' : '' }]);
   }
-  function onParentIdChange(val) {
-    if (state.category !== 'App') return;
-    const values = getFieldsValue();
-    let tempData: any[] = [];
-    if (val === '-1') {
-      tempData = appTypeData.filter(o => o.id == 1);
-      if (values.type && values.type != 1) setFieldsValue({ type: '' });
-    } else {
-      tempData = appTypeData;
+  function onParentIdChange(val, data) {
+    console.log('上级菜单选择变化:', val, 'data:', data);
+    // 确保值被正确设置到表单
+    setFieldsValue({ parentId: val });
+    // 清除 parentId 字段的验证状态
+    clearValidate('parentId');
+
+    // 使用 nextTick 确保值已更新后再验证
+    nextTick(async () => {
+      const currentValues = getFieldsValue();
+      console.log('选择后表单值中的 parentId:', currentValues.parentId);
+      // 手动触发 parentId 字段的验证，确保验证通过
+      try {
+        await validateFields(['parentId']);
+        console.log('parentId 字段验证通过');
+      } catch (error: any) {
+        console.warn('parentId 字段验证失败:', error);
+      }
+    });
+
+    // 如果是 App 类别，需要处理类型限制
+    if (state.category === 'App') {
+      const values = getFieldsValue();
+      let tempData: any[] = [];
+      if (val === '-1') {
+        tempData = appTypeData.filter(o => o.id == 1);
+        if (values.type && values.type != 1) setFieldsValue({ type: '' });
+      } else {
+        tempData = appTypeData;
+      }
+      updateSchema({ field: 'type', componentProps: { options: tempData } });
     }
-    updateSchema({ field: 'type', componentProps: { options: tempData } });
   }
   function onModuleIdChange(val) {
     const values = getFieldsValue();
@@ -384,15 +519,71 @@
     return newArr;
   }
   function getMenuSelectorList(category, id = '0', systemId) {
-    getMenuSelector({ category }, id, systemId).then(res => {
-      let topItem = {
-        fullName: '顶级节点',
-        hasChildren: true,
-        id: '-1',
-        children: res.data.list,
-      };
-      updateSchema({ field: 'parentId', componentProps: { options: [topItem] } });
-    });
+    console.log('获取菜单选择器列表 - category:', category, 'id:', id, 'systemId:', systemId);
+    getMenuSelector({ category }, id, systemId)
+      .then(res => {
+        console.log('菜单选择器API返回数据:', res);
+        console.log('res.data:', res.data);
+
+        // 后端返回格式：Result.success(menus)，所以 res.data 直接是数组
+        let menuList: any[] = [];
+        if (Array.isArray(res.data)) {
+          menuList = res.data;
+        } else if (res.data && Array.isArray(res.data.list)) {
+          menuList = res.data.list;
+        } else if (res.data && Array.isArray(res.data.data)) {
+          menuList = res.data.data;
+        }
+
+        console.log('处理后的菜单列表:', menuList);
+        console.log('菜单列表数量:', menuList.length);
+
+        // 如果是编辑模式，需要排除当前菜单及其所有子菜单
+        if (id && id !== '0' && state.id) {
+          const currentMenuId = typeof state.id === 'string' ? Number(state.id) : state.id;
+          menuList = filterMenuTree(menuList, currentMenuId);
+          console.log('过滤后的菜单列表:', menuList);
+        }
+
+        let topItem = {
+          fullName: '顶级节点',
+          hasChildren: menuList && menuList.length > 0,
+          id: '-1',
+          children: menuList,
+        };
+
+        console.log('最终设置的选项:', topItem);
+        updateSchema({ field: 'parentId', componentProps: { options: [topItem] } });
+      })
+      .catch(error => {
+        console.error('获取菜单选择器失败:', error);
+        console.error('错误详情:', error.response?.data || error.message);
+      });
+  }
+
+  /**
+   * 递归过滤菜单树，排除指定菜单及其所有子菜单
+   * @param menuList 菜单列表
+   * @param excludeId 要排除的菜单ID
+   * @returns 过滤后的菜单列表
+   */
+  function filterMenuTree(menuList, excludeId) {
+    if (!menuList || !Array.isArray(menuList)) return [];
+
+    return menuList
+      .filter(menu => {
+        // 排除当前菜单本身
+        const menuId = typeof menu.id === 'string' ? Number(menu.id) : menu.id;
+        return menuId !== excludeId;
+      })
+      .map(menu => {
+        // 递归过滤子菜单
+        if (menu.children && menu.children.length > 0) {
+          menu.children = filterMenuTree(menu.children, excludeId);
+          menu.hasChildren = menu.children.length > 0;
+        }
+        return menu;
+      });
   }
   function switchType(val) {
     if (val == 3) fetchFeatureList();
