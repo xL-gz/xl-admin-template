@@ -1,5 +1,5 @@
 <template>
-  <BasicModal v-bind="$attrs" @register="registerModal" :title="getTitle" @ok="handleSubmit" destroy-on-close>
+  <BasicModal v-bind="$attrs" @register="registerModal" :title="getTitle" showOkBtn @ok="handleSubmit" destroy-on-close>
     <BasicForm @register="registerForm">
       <template #icon="{ model, field }">
         <a-row type="flex">
@@ -35,11 +35,6 @@
   import { useMessage } from '@/hooks/web/useMessage';
   import { useBaseStore } from '@/store/modules/base';
   import { getMenuSelector, create, update, getInfo } from '@/api/system/menu';
-  // import { getVisualDevSelector } from '@/api/onlineDev/visualDev'; // 已删除 - 后端无此接口
-  // import { getDictionaryType } from '@/api/systemData/dictionary'; // 已删除 - 后端无此接口
-  // import { getDataReportSelector } from '@/api/onlineDev/dataReport'; // 已删除 - 后端无此接口
-  // import { getDataVSelector } from '@/api/onlineDev/dataV'; // 已删除 - 后端无此接口
-  // import { getPortalSelector } from '@/api/onlineDev/portal'; // 已删除 - 后端无此接口
   // 占位符函数
   const getVisualDevSelector = () => Promise.resolve({ data: { list: [] } });
   const getDictionaryType = () => Promise.resolve({ data: { list: [] } });
@@ -233,6 +228,13 @@
   async function handleSubmit() {
     const values = await validate();
     if (!values) return;
+
+    // 确保编辑模式下有 id
+    if (state.id && typeof state.id === 'string' && !state.id.trim()) {
+      createMessage.error('菜单ID不存在，无法更新');
+      return;
+    }
+
     changeOkLoading(true);
     const menuEnCode = values.enCode.replace('.', '');
     const moduleId = values.moduleId;
@@ -247,27 +249,76 @@
       if (values.type == 3 || values.type == 9) values.urlAddress = `/pages/apply/dynamicModel/index?id=${moduleId}`;
       if (values.type == 5 || values.type == 8) values.urlAddress = menuEnCode;
     }
-    const query = {
-      ...state.dataForm,
-      ...values,
+    // 构建提交数据，确保字段映射正确
+    const query: any = {
+      fullName: values.fullName,
+      enCode: values.enCode,
+      icon: values.icon,
+      type: values.type,
+      sortCode: values.sortCode || 0,
+      enabledMark: values.enabledMark !== undefined ? values.enabledMark : 1,
+      parentId: values.parentId ? (typeof values.parentId === 'string' && values.parentId === '-1' ? 0 : Number(values.parentId)) : 0,
       systemId: state.systemId,
       category: state.category,
       propertyJson: JSON.stringify(state.dataForm.propertyJson),
-      linkTarget: state.dataForm.linkTarget,
-      id: state.id,
+      linkTarget: state.dataForm.linkTarget || '_self',
+      // description 字段映射到 remark（如果后端MenuDTO支持description，可以去掉这行）
+      remark: values.description || state.dataForm.remark || '',
+      // 确保 ID 是正确的类型
+      id: state.id ? (typeof state.id === 'string' ? Number(state.id) : state.id) : undefined,
     };
+
+    // 只在有地址的时候设置 urlAddress
+    if (values.urlAddress) {
+      query.urlAddress = values.urlAddress;
+    }
+
+    // 如果存在其他字段，也保留
+    if (state.dataForm.orderNum !== undefined) {
+      query.orderNum = state.dataForm.orderNum;
+    }
+    if (state.dataForm.visible !== undefined) {
+      query.visible = state.dataForm.visible;
+    }
+    if (state.dataForm.status !== undefined) {
+      query.status = state.dataForm.status;
+    }
+    if (state.dataForm.perms) {
+      query.perms = state.dataForm.perms;
+    }
+
+    console.log('提交菜单数据:', query);
+    console.log('是否为编辑模式:', !!state.id);
+    console.log('state.id 值:', state.id);
+    console.log('query.id 值:', query.id);
+
     const formMethod = state.id ? update : create;
     formMethod(query)
       .then(res => {
-        createMessage.success(res.msg);
+        console.log('提交成功，响应:', res);
+        createMessage.success(res?.msg || res?.message || (state.id ? '更新成功' : '创建成功'));
         changeOkLoading(false);
         emit('reload');
         setTimeout(() => {
           closeModal();
         }, 200);
       })
-      .catch(() => {
+      .catch(error => {
+        console.error('提交失败:', error);
+        console.error('错误详情:', {
+          message: error?.message,
+          response: error?.response,
+          data: error?.response?.data,
+        });
         changeOkLoading(false);
+        // 如果 axios 拦截器没有显示错误，显示一个通用错误
+        if (error?.response?.data?.msg) {
+          createMessage.error(error.response.data.msg);
+        } else if (error?.message) {
+          createMessage.error(error.message);
+        } else {
+          createMessage.error('操作失败，请检查控制台日志');
+        }
       });
   }
   function onTypeChange(val) {

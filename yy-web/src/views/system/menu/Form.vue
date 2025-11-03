@@ -168,6 +168,11 @@
   async function handleSubmit() {
     const values = await validate();
     if (!values) return;
+    // 确保编辑模式下有 id
+    if (id.value && typeof id.value === 'string' && !id.value.trim()) {
+      createMessage.error('系统ID不存在，无法更新');
+      return;
+    }
     changeOkLoading(true);
     const query = {
       ...values,
@@ -175,16 +180,26 @@
       workLogoIcon: state.dataForm.workLogoIcon,
       id: id.value,
     };
+    console.log('提交数据:', query);
+    console.log('是否为编辑模式:', !!id.value);
     const formMethod = id.value ? update : create;
     formMethod(query)
       .then(res => {
-        createMessage.success(res.msg);
+        console.log('提交成功，响应:', res);
+        createMessage.success(res?.msg || res?.message || (id.value ? '更新成功' : '创建成功'));
         changeOkLoading(false);
         closeModal();
         emit('reload');
       })
-      .catch(() => {
+      .catch(error => {
+        console.error('提交失败:', error);
         changeOkLoading(false);
+        // 错误信息已经在 axios 拦截器中处理并显示了
+        // 但如果拦截器没有显示错误，这里显示一个通用错误
+        if (error && error.message && !error.message.includes('timeout')) {
+          // 如果错误消息不包含timeout，说明可能不是网络问题，可能是业务错误
+          // 这种情况下，axios拦截器应该已经显示了错误
+        }
       });
   }
 </script>
