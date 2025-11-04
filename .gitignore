@@ -1,0 +1,42 @@
+# xl-web 前端项目忽略文件
+xl-web/node_modules/
+xl-web/dist/
+xl-web/build/
+xl-web/.vite/
+xl-web/.cache/
+xl-web/.temp/
+xl-web/.DS_Store
+xl-web/*.log
+xl-web/.env.local
+xl-web/.env.*.local
+xl-web/.idea/
+xl-web/.vscode/
+xl-web/.npm/
+xl-web/.yarn/
+xl-web/.pnpm-store/
+
+# xl-im-backend 后端项目忽略文件
+xl-im-backend/**/target/
+xl-im-backend/.idea/
+xl-im-backend/*.iml
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+*.tmp
+*.temp
+
