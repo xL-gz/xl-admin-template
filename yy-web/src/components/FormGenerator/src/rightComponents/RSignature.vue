@@ -4,7 +4,7 @@
   </a-form-item>
 </template>
 <script lang="ts" setup>
-  import { getSignatureSelector } from '@/api/system/signature';
+  // import { getSignatureSelector } from '@/api/system/signature'; // 已删除 - 后端无此接口
   import { ref, onMounted } from 'vue';
 
   defineOptions({ inheritAttrs: false });
@@ -13,9 +13,8 @@
   const options = ref([]);
 
   function getOptions() {
-    getSignatureSelector().then(res => {
-      options.value = res?.data?.list || [];
-    });
+    // 签章选择器功能已移除
+    options.value = [];
   }
 
   onMounted(() => getOptions());

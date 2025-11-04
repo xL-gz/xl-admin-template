@@ -166,24 +166,8 @@
         </a-col>
       </a-row>
     </a-tab-pane>
-    <a-tab-pane key="4" tab="审批常用语" class="!p-0px">
-      <BasicTable @register="registerTable">
-        <template #tableTitle>
-          <a-button type="primary" preIcon="icon-ym icon-ym-btn-add" @click="addOrUpdateHandle()">{{ t('common.addText') }}</a-button>
-        </template>
-        <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'enabledMark'">
-            <a-tag :color="record.enabledMark == 1 ? 'success' : 'error'">{{ record.enabledMark == 1 ? '启用' : '禁用' }}</a-tag>
-          </template>
-          <template v-if="column.key === 'action'">
-            <TableAction :actions="getTableActions(record)" />
-          </template>
-        </template>
-      </BasicTable>
-    </a-tab-pane>
   </a-tabs>
   <SignModal ref="signModalRef" submitOnConfirm @confirm="getSign" />
-  <Form @register="registerForm" @reload="reload" />
 </template>
 
 <script setup lang="ts">
@@ -197,11 +181,6 @@
   import SignModal from '@/components/Youyi/Sign/src/SignModal.vue';
   import { CheckOutlined } from '@ant-design/icons-vue';
   import { getBase64WithFile } from '@/components/Youyi/Upload/src/helper';
-  import { getCommonWordsList, delCommonWords } from '@/api/system/commonWords';
-  import { BasicTable, useTable, TableAction, BasicColumn, ActionItem } from '@/components/Table';
-  import { useModal } from '@/components/Modal';
-  import { useI18n } from '@/hooks/web/useI18n';
-  import Form from '@/views/system/commonWords/Form.vue';
 
   interface State {
     activeKey: string;
@@ -256,22 +235,6 @@
     },
   });
   const { activeKey, form, form2, educationOptions, certificatesTypeOptions, genderOptions, nationOptions } = toRefs(state);
-  const columns: BasicColumn[] = [
-    { title: '常用语', dataIndex: 'commonWordsText' },
-    { title: '使用次数', dataIndex: 'usesNum', width: 80, align: 'center' },
-    { title: '状态', dataIndex: 'enabledMark', width: 80, align: 'center' },
-  ];
-  const [registerForm, { openModal: openFormModal }] = useModal();
-  const [registerTable, { reload }] = useTable({
-    api: getCommonWordsList,
-    searchInfo: { commonWordsType: 1 },
-    columns,
-    actionColumn: {
-      width: 100,
-      title: '操作',
-      dataIndex: 'action',
-    },
-  });
 
   const getCreatorTime = computed(() => (state.form.creatorTime ? formatToDateTime(state.form.creatorTime, 'YYYY-MM-DD HH:mm:ss') : ''));
   const getEntryDate = computed(() => (state.form.entryDate ? formatToDateTime(state.form.entryDate, 'YYYY-MM-DD HH:mm:ss') : ''));
@@ -353,30 +316,6 @@
     deleteSign(id).then(res => {
       createMessage.success(res.msg);
       getSign();
-    });
-  }
-  function getTableActions(record): ActionItem[] {
-    return [
-      {
-        label: t('common.editText'),
-        onClick: addOrUpdateHandle.bind(null, record.id),
-      },
-      {
-        label: t('common.delText'),
-        color: 'error',
-        modelConfirm: {
-          onOk: handleDelete.bind(null, record.id),
-        },
-      },
-    ];
-  }
-  function addOrUpdateHandle(id = '') {
-    openFormModal(true, { id, commonWordsType: 1 });
-  }
-  function handleDelete(id) {
-    delCommonWords(id).then(res => {
-      createMessage.success(res.msg);
-      reload();
     });
   }
 

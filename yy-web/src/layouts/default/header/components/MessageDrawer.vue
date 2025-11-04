@@ -51,7 +51,6 @@
         </a-tooltip>
       </div>
     </div>
-    <Detail @register="registerDetail" />
   </BasicDrawer>
 </template>
 <script lang="ts" setup>
@@ -72,7 +71,6 @@
   import { DownOutlined } from '@ant-design/icons-vue';
   import { toDateValue } from '@/utils/youyi';
   import { encryptByBase64 } from '@/utils/cipher';
-  import Detail from '@/views/system/notice/Detail.vue';
   import { useBaseStore } from '@/store/modules/base';
   // import { getScheduleDetail } from '@/api/workFlow/schedule'; // 已删除 - 后端无此接口
   // 占位符函数
@@ -92,7 +90,6 @@
   const router = useRouter();
   const { createMessage, createConfirm } = useMessage();
   const { t } = useI18n();
-  const [registerDetail, { openModal: openDetailModal }] = useModal();
   const [registerScheduleDetail, { openModal: openScheduleDetailModal }] = useModal();
   const [registerDrawer, { changeLoading, closeDrawer, getOpen }] = useDrawerInner(init);
   const infiniteBody = ref<Nullable<ScrollActionType>>(null);
@@ -181,7 +178,8 @@
         router.push('/workFlow/entrust?config=' + bodyText.type);
       } else {
         if (item.type == 1 || item.type == 3) {
-          openDetailModal(true, { id: item.id, type: 1 });
+          // 公告详情功能已移除
+          createMessage.info('公告详情功能暂不可用');
         } else {
           if (!res.data.bodyText) return;
           closeDrawer();

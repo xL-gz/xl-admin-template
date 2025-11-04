@@ -26,7 +26,6 @@
         </BasicTable>
       </div>
     </div>
-    <Detail @register="registerDetail" />
 <!--    <ScheduleDetail @register="registerScheduleDetail" />-->
   </div>
 </template>
@@ -41,7 +40,6 @@
   import { useRouter } from 'vue-router';
   import { encryptByBase64 } from '@/utils/cipher';
   import { useBaseStore } from '@/store/modules/base';
-  import Detail from '@/views/system/notice/Detail.vue';
   // import ScheduleDetail from '@/views/workFlow/schedule/Detail.vue';
   import { getScheduleDetail } from '@/api/workFlow/schedule';
 
@@ -95,7 +93,6 @@
     clickToRowSelect: false,
     immediate: false,
   });
-  const [registerDetail, { openModal: openDetailModal }] = useModal();
   const [registerScheduleDetail, { openModal: openScheduleDetailModal }] = useModal();
 
   watch(
@@ -154,7 +151,8 @@
         router.push('/workFlow/entrust?config=' + bodyText.type);
       } else {
         if (item.type == 1 || item.type == 3) {
-          openDetailModal(true, { id: item.id, type: 1 });
+          // 公告详情功能已移除
+          createMessage.info('公告详情功能暂不可用');
         } else {
           if (!res.data.bodyText) return;
           router.push('/workFlowDetail?config=' + encodeURIComponent(encryptByBase64(res.data.bodyText)));

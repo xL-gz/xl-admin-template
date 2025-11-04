@@ -27,7 +27,8 @@
 </template>
 
 <script lang="ts" setup>
-  import { getBillRuleSelector } from '@/api/system/billRule';
+  // import { getBillRuleSelector } from '@/api/system/billRule'; // 已删除 - 后端无此接口
+  const getBillRuleSelector = () => Promise.resolve({ data: { list: [] } });
   import { Form, Modal as AModal } from 'ant-design-vue';
   import { reactive, ref, unref, watch, computed, nextTick } from 'vue';
   import ModalClose from '@/components/Modal/src/components/ModalClose.vue';
