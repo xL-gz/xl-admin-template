@@ -39,7 +39,7 @@ xl-admin-template/
 │   ├── xl-im-common/       # 通用模块
 │   ├── xl-im-system/       # 系统模块（业务逻辑）
 │   └── xl-im-admin/        # 管理模块（控制器、启动类）
-└── yy-web/                  # 前端项目
+└── xl-web/                  # 前端项目
     ├── src/
     │   ├── api/            # API 接口
     │   ├── components/     # 公共组件
@@ -140,7 +140,7 @@ mvn spring-boot:run
 
 ```bash
 # 进入前端目录
-cd yy-web
+cd xl-web
 
 # 安装依赖
 pnpm install
@@ -175,7 +175,7 @@ spring:
 ```
 
 #### 前端配置
-编辑 `yy-web/build/config/vite/proxy.ts` 配置代理：
+编辑 `xl-web/build/config/vite/proxy.ts` 配置代理：
 
 ```typescript
 export default {
@@ -223,7 +223,7 @@ export default {
 
 - **修改项目名称**: 更新 `pom.xml` 和 `package.json` 中的 name 字段
 - **修改端口**: 修改 `application.yml` 中的 `server.port`
-- **修改主题**: 在 `yy-web/src/design` 中配置主题色
+- **修改主题**: 在 `xl-web/src/design` 中配置主题色
 
 ## 📝 开发规范
 
