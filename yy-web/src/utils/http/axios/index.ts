@@ -24,24 +24,10 @@ import axios from 'axios';
 
 const localeStore = useLocaleStoreWithOut();
 const locale = localeStore.getLocale;
-// 使用函数动态获取配置，以便在配置更改时能够实时更新
-function getGlobSetting() {
-  return useGlobSetting();
-}
-const globSetting = getGlobSetting();
-const urlPrefix = globSetting.urlPrefix;
+const globSetting = useGlobSetting();
+const urlPrefix = globSetting.urlPrefix || '';
 const aesEncryption = new AesEncryption({ useHex: true });
 const { createMessage, createErrorModal } = useMessage();
-
-// 监听API配置变更事件，重新初始化axios
-if (typeof window !== 'undefined') {
-  window.addEventListener('apiConfigChanged', () => {
-    // 配置变更时，重新获取API地址
-    const newSetting = getGlobSetting();
-    // 注意：这里只是更新了apiUrl，实际请求时会在beforeRequestHook中动态获取
-    console.log('API配置已更新:', newSetting.apiUrl);
-  });
-}
 
 /**
  * @description: 数据处理，方便区分多种处理方式
@@ -70,8 +56,8 @@ const transform: AxiosTransform = {
     }
     //  这里 code,data,msg为 后台统一的字段，需要在 types.ts内修改为项目自己的接口返回格式
     // 兼容 message 和 msg 两种字段名
-    const { code, msg, message } = res.data;
-    const msgText = msg || message;
+    const { code, msg } = res.data;
+    const msgText = msg || (res.data as any).message;
 
     // 这里逻辑可以根据项目进行修改
     const hasSuccess = res.data && isObject(res.data) && Reflect.has(res.data, 'code') && code === ResultEnum.SUCCESS;
@@ -112,14 +98,9 @@ const transform: AxiosTransform = {
 
   // 请求之前处理config
   beforeRequestHook: (config, options) => {
-    // 动态获取最新的API配置，以支持运行时切换
-    const currentSetting = getGlobSetting();
-    const { joinPrefix, joinParamsToUrl, formatDate, joinTime = true } = options;
-    // 使用当前配置的API地址
-    const apiUrl = currentSetting.apiUrl || options.apiUrl;
-    const urlPrefix = currentSetting.urlPrefix || options.urlPrefix;
+    const { apiUrl, joinPrefix, joinParamsToUrl, formatDate, joinTime = true, urlPrefix } = options;
 
-    if (joinPrefix) {
+    if (joinPrefix && urlPrefix) {
       config.url = `${urlPrefix}${config.url}`;
     }
 

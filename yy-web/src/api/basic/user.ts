@@ -9,8 +9,8 @@ enum Api {
 
 // 用户登录
 export function loginApi(params: LoginParams) {
-  return defHttp.post({ 
-    url: Api.Login, 
+  return defHttp.post({
+    url: Api.Login,
     data: {
       username: params.account,
       password: params.password,
