@@ -42,7 +42,19 @@ public class FileUploadServiceImpl implements FileUploadService {
             // 获取系统配置
             SystemConfig config = getSystemConfig();
             
-            // 优先使用启用的云服务器配置
+            // 优先使用启用的OSS配置
+            if (config != null && config.getOssStorageConfigs() != null) {
+                SystemConfig.OssStorageConfig ossConfig = config.getOssStorageConfigs().stream()
+                    .filter(c -> c.getEnabled() != null && c.getEnabled())
+                    .min(Comparator.comparing(c -> c.getSortCode() != null ? c.getSortCode() : 0))
+                    .orElse(null);
+                
+                if (ossConfig != null) {
+                    return uploadToOss(file, fileType, ossConfig);
+                }
+            }
+            
+            // 其次使用启用的云服务器配置
             if (config != null && config.getCloudServerStorageConfigs() != null) {
                 SystemConfig.CloudServerStorageConfig cloudConfig = config.getCloudServerStorageConfigs().stream()
                     .filter(c -> c.getEnabled() != null && c.getEnabled())
@@ -54,13 +66,27 @@ public class FileUploadServiceImpl implements FileUploadService {
                 }
             }
             
-            // 如果没有云服务器配置，使用本地存储
+            // 如果都没有配置，使用本地存储
             return uploadToLocal(file, fileType);
             
         } catch (Exception e) {
             log.error("文件上传失败", e);
             throw new RuntimeException("文件上传失败: " + e.getMessage());
         }
+    }
+    
+    /**
+     * 上传文件到OSS（待实现）
+     */
+    private Map<String, Object> uploadToOss(
+            MultipartFile file, 
+            String fileType, 
+            SystemConfig.OssStorageConfig config) throws IOException {
+        
+        // TODO: 实现OSS上传逻辑
+        // 这里需要集成阿里云OSS SDK或其他OSS服务
+        log.warn("OSS上传功能尚未实现，回退到本地存储");
+        return uploadToLocal(file, fileType);
     }
     
     /**
@@ -71,22 +97,97 @@ public class FileUploadServiceImpl implements FileUploadService {
             String fileType, 
             SystemConfig.CloudServerStorageConfig config) throws IOException {
         
+        // 检查配置是否有效
+        if (config == null) {
+            log.warn("云服务器配置为空，回退到本地存储");
+            return uploadToLocal(file, fileType);
+        }
+        
+        String serverAddress = config.getServerAddress();
+        String storagePath = config.getStoragePath();
+        
+        // 如果serverAddress为空且storagePath也为空，回退到本地存储
+        if ((serverAddress == null || serverAddress.trim().isEmpty()) && 
+            (storagePath == null || storagePath.trim().isEmpty())) {
+            log.warn("云服务器配置无效（serverAddress和storagePath都为空），回退到本地存储");
+            return uploadToLocal(file, fileType);
+        }
+        
+        // 检测操作系统类型
+        String osName = System.getProperty("os.name").toLowerCase();
+        boolean isWindows = osName.contains("windows");
+        
+        // 如果serverAddress是HTTP/HTTPS地址，通过HTTP接口上传（适用于跨服务器上传）
+        if (serverAddress != null && !serverAddress.trim().isEmpty() && 
+            (serverAddress.startsWith("http://") || serverAddress.startsWith("https://"))) {
+            // 通过HTTP接口上传到云服务器
+            // 生成安全的临时文件名（UUID + 扩展名，避免中文问题）
+            String tempFileName = generateSafeFileName(file.getOriginalFilename());
+            Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"), tempFileName);
+            Files.write(tempPath, file.getBytes());
+            
+            try {
+                String remotePath = uploadViaHttp(
+                    tempPath.toFile(), 
+                    serverAddress, 
+                    storagePath,
+                    config.getAccessKey()
+                );
+                
+                // 检查云服务器返回的URL是否已经是完整URL
+                String fileUrl;
+                if (remotePath != null && (remotePath.startsWith("http://") || remotePath.startsWith("https://"))) {
+                    // 如果已经是完整URL，直接使用
+                    fileUrl = remotePath;
+                    // 提取相对路径用于path字段
+                    if (remotePath.contains("/uploads/")) {
+                        remotePath = remotePath.substring(remotePath.indexOf("/uploads/") + "/uploads/".length());
+                    }
+                } else {
+                    // 否则使用buildFileUrl构建
+                    fileUrl = buildFileUrl(serverAddress, remotePath);
+                }
+                
+                Map<String, Object> result = new HashMap<>();
+                result.put("url", fileUrl);
+                result.put("path", remotePath);
+                result.put("fileName", file.getOriginalFilename());
+                result.put("fileSize", file.getSize());
+                result.put("storageType", "cloud");
+                
+                log.info("文件已通过HTTP上传到云服务器: {} -> {}", file.getOriginalFilename(), fileUrl);
+                return result;
+            } catch (Exception e) {
+                log.error("通过HTTP上传到云服务器失败，回退到本地存储: {}", e.getMessage());
+                return uploadToLocal(file, fileType);
+            } finally {
+                Files.deleteIfExists(tempPath);
+            }
+        }
+        
+        // 如果是在Windows环境且storagePath是Linux路径，回退到本地存储
+        if (isWindows && storagePath != null && !storagePath.trim().isEmpty() && storagePath.startsWith("/")) {
+            log.warn("Windows环境下无法使用Linux路径: {}，回退到本地存储", storagePath);
+            return uploadToLocal(file, fileType);
+        }
+        
         // 1. 先保存到本地临时目录
-        String tempFileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        // 生成安全的临时文件名（UUID + 扩展名，避免中文问题）
+        String tempFileName = generateSafeFileName(file.getOriginalFilename());
         Path tempPath = Paths.get(System.getProperty("java.io.tmpdir"), tempFileName);
         Files.write(tempPath, file.getBytes());
         
         try {
-            // 2. 上传到云服务器
+            // 2. 上传到云服务器（直接保存到本地路径，适用于应用部署在云服务器上的情况）
             String remotePath = uploadToRemoteServer(
                 tempPath.toFile(), 
-                config.getServerAddress(), 
-                config.getStoragePath(),
+                serverAddress, 
+                storagePath,
                 config.getAccessKey()
             );
             
             // 3. 构建文件URL
-            String fileUrl = buildFileUrl(config.getServerAddress(), remotePath);
+            String fileUrl = buildFileUrl(serverAddress, remotePath);
             
             Map<String, Object> result = new HashMap<>();
             result.put("url", fileUrl);
@@ -95,8 +196,13 @@ public class FileUploadServiceImpl implements FileUploadService {
             result.put("fileSize", file.getSize());
             result.put("storageType", "cloud");
             
+            log.info("文件已上传到云服务器: {} -> {}", file.getOriginalFilename(), fileUrl);
             return result;
             
+        } catch (Exception e) {
+            log.error("上传到云服务器失败，回退到本地存储: {}", e.getMessage());
+            // 如果云服务器上传失败，回退到本地存储
+            return uploadToLocal(file, fileType);
         } finally {
             // 删除临时文件
             Files.deleteIfExists(tempPath);
@@ -116,52 +222,102 @@ public class FileUploadServiceImpl implements FileUploadService {
             String storagePath,
             String accessKey) throws IOException {
         
-        // 方式1: 如果serverAddress是本地路径（如 /var/www/uploads）
-        // 或者后端应用就部署在这台云服务器上，直接保存到本地
-        if (serverAddress == null || serverAddress.trim().isEmpty() || 
-            !serverAddress.startsWith("http://") && !serverAddress.startsWith("https://")) {
-            // 当作本地路径处理
-            return saveToLocalPath(file, serverAddress != null ? serverAddress : storagePath);
+        // 方式1: 如果serverAddress是HTTP/HTTPS地址，通过HTTP接口上传
+        if (serverAddress != null && !serverAddress.trim().isEmpty() && 
+            (serverAddress.startsWith("http://") || serverAddress.startsWith("https://"))) {
+            return uploadViaHttp(file, serverAddress, storagePath, accessKey);
         }
         
-        // 方式2: 通过HTTP接口上传
-        return uploadViaHttp(file, serverAddress, storagePath, accessKey);
+        // 方式2: 如果serverAddress为空或不是HTTP地址，且storagePath不为空
+        // 说明应用部署在云服务器上，直接保存到本地路径
+        if (storagePath != null && !storagePath.trim().isEmpty()) {
+            return saveToLocalPath(file, storagePath);
+        }
+        
+        // 如果serverAddress不为空但不是HTTP地址，尝试作为本地路径
+        if (serverAddress != null && !serverAddress.trim().isEmpty()) {
+            return saveToLocalPath(file, serverAddress);
+        }
+        
+        // 如果都为空，抛出异常
+        throw new IOException("云服务器配置无效：serverAddress和storagePath都为空");
     }
     
     /**
      * 保存文件到本地路径（适用于应用部署在云服务器上的情况）
      */
     private String saveToLocalPath(File file, String basePath) throws IOException {
-        String fullFileName = file.getName();
-        String fileName = fullFileName.contains("_") ? fullFileName.substring(fullFileName.indexOf("_") + 1) : fullFileName;
+        // 从临时文件名中提取扩展名（临时文件名已经是UUID + 扩展名格式）
+        String tempFileName = file.getName();
+        String extension = getFileExtension(tempFileName);
         
-        // 根据文件名识别类型
-        String category = getFileCategoryFromFileName(fileName);
+        // 根据扩展名识别类型
+        String category = getFileCategoryFromFileName(tempFileName);
         
         // 生成文件路径：按类型和日期分目录
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
         
-        // 确保basePath是绝对路径
-        Path targetDir = Paths.get(basePath, category, datePath);
+        // 检测操作系统类型
+        String osName = System.getProperty("os.name").toLowerCase();
+        boolean isWindows = osName.contains("windows");
+        
+        // 处理路径：如果是相对路径，转换为绝对路径
+        Path basePathObj;
+        if (basePath.startsWith("/")) {
+            // Linux绝对路径
+            if (isWindows) {
+                // 在Windows上，Linux路径无法直接使用，抛出异常让上层回退到本地存储
+                throw new IOException("在Windows环境下无法使用Linux路径: " + basePath + "，请使用本地存储或配置Windows路径");
+            }
+            basePathObj = Paths.get(basePath);
+        } else if (basePath.matches("^[A-Za-z]:.*")) {
+            // Windows绝对路径
+            basePathObj = Paths.get(basePath);
+        } else {
+            // 相对路径，转换为绝对路径
+            basePathObj = Paths.get(System.getProperty("user.dir"), basePath);
+        }
+        
+        Path targetDir = basePathObj.resolve(category).resolve(datePath);
         Files.createDirectories(targetDir);
         
-        Path targetFile = targetDir.resolve(fileName);
+        // 生成唯一文件名（UUID + 扩展名，避免中文问题）
+        String uniqueFileName = UUID.randomUUID().toString() + (extension.isEmpty() ? "" : "." + extension);
+        Path targetFile = targetDir.resolve(uniqueFileName);
         Files.copy(file.toPath(), targetFile);
         
-        String relativePath = category + "/" + datePath + "/" + fileName;
-        log.info("文件已保存到云服务器: {} -> {} (类型: {})", fileName, targetFile.toString(), category);
+        String relativePath = category + "/" + datePath + "/" + uniqueFileName;
+        log.info("文件已保存到云服务器路径: {} -> {} (类型: {})", uniqueFileName, targetFile.toString(), category);
         
         return relativePath;
+    }
+    
+    /**
+     * 生成安全的文件名（UUID + 扩展名，不包含原始文件名，避免中文问题）
+     */
+    private String generateSafeFileName(String originalFilename) {
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        return UUID.randomUUID().toString() + extension;
+    }
+    
+    /**
+     * 从文件名中提取扩展名
+     */
+    private String getFileExtension(String fileName) {
+        if (fileName != null && fileName.contains(".")) {
+            return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+        }
+        return "";
     }
     
     /**
      * 根据文件名识别文件分类（用于临时文件）
      */
     private String getFileCategoryFromFileName(String fileName) {
-        String extension = "";
-        if (fileName.contains(".")) {
-            extension = fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
-        }
+        String extension = getFileExtension(fileName);
         
         String[] imageExtensions = {"jpg", "jpeg", "png", "gif", "bmp", "webp", "svg", "ico"};
         String[] videoExtensions = {"mp4", "avi", "mov", "wmv", "flv", "mkv", "rmvb", "3gp", "m4v", "webm"};
@@ -186,6 +342,7 @@ public class FileUploadServiceImpl implements FileUploadService {
     
     /**
      * 通过HTTP接口上传文件到云服务器
+     * 注意：这种方式会调用云服务器的上传接口，云服务器会根据自己的配置决定存储位置
      */
     private String uploadViaHttp(
             File file, 
@@ -209,17 +366,18 @@ public class FileUploadServiceImpl implements FileUploadService {
             org.springframework.util.LinkedMultiValueMap<String, Object> body = 
                 new org.springframework.util.LinkedMultiValueMap<>();
             body.add("file", new org.springframework.core.io.FileSystemResource(file));
-            body.add("path", storagePath);
             
             org.springframework.http.HttpEntity<org.springframework.util.MultiValueMap<String, Object>> requestEntity = 
                 new org.springframework.http.HttpEntity<>(body, headers);
             
-            // 调用云服务器的上传接口
+            // 调用云服务器的上传接口（使用annexpic类型，与前端一致）
             String uploadUrl = serverAddress;
             if (!uploadUrl.endsWith("/")) {
                 uploadUrl += "/";
             }
-            uploadUrl += "api/upload";
+            uploadUrl += "api/file/Uploader/annexpic";
+            
+            log.info("通过HTTP上传文件到云服务器: {} -> {}", file.getName(), uploadUrl);
             
             org.springframework.http.ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 uploadUrl,
@@ -230,9 +388,32 @@ public class FileUploadServiceImpl implements FileUploadService {
             
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
-                String filePath = (String) responseBody.get("path");
-                log.info("文件已上传到云服务器: {} -> {}", file.getName(), filePath);
-                return filePath != null ? filePath : storagePath + "/" + file.getName();
+                
+                // 解析响应：Result格式 {code: 200, data: {url: "...", path: "..."}, msg: "..."}
+                Integer code = (Integer) responseBody.get("code");
+                if (code != null && code == 200) {
+                    Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+                    if (data != null) {
+                        String filePath = (String) data.get("path");
+                        String fileUrl = (String) data.get("url");
+                        log.info("文件已通过HTTP上传到云服务器: {} -> {}", file.getName(), fileUrl);
+                        
+                        // 优先返回fileUrl（可能是完整URL或相对路径）
+                        if (fileUrl != null && !fileUrl.isEmpty()) {
+                            return fileUrl;
+                        }
+                        // 如果没有fileUrl，使用filePath
+                        if (filePath != null && !filePath.isEmpty()) {
+                            // 如果filePath包含/uploads/，去掉前缀返回相对路径
+                            if (filePath.startsWith("/uploads/")) {
+                                return filePath.substring("/uploads/".length());
+                            }
+                            return filePath;
+                        }
+                        return "";
+                    }
+                }
+                throw new IOException("云服务器返回错误: " + responseBody.get("msg"));
             } else {
                 throw new IOException("上传到云服务器失败: " + response.getStatusCode());
             }
@@ -253,7 +434,8 @@ public class FileUploadServiceImpl implements FileUploadService {
         // 生成文件路径：按类型和日期分目录
         // 格式：uploads/{类型}/{日期}/{文件名}
         String datePath = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
-        String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        // 生成安全的文件名（UUID + 扩展名，避免中文问题）
+        String fileName = generateSafeFileName(file.getOriginalFilename());
         String relativePath = category + "/" + datePath + "/" + fileName;
         
         // 完整路径
@@ -349,23 +531,41 @@ public class FileUploadServiceImpl implements FileUploadService {
      * 构建文件访问URL
      */
     private String buildFileUrl(String serverAddress, String filePath) {
-        if (serverAddress == null || serverAddress.isEmpty()) {
-            // 如果没有配置服务器地址，使用相对路径
-            return "/uploads/" + filePath;
+        if (filePath == null || filePath.isEmpty()) {
+            return "";
+        }
+        
+        // 如果filePath已经是完整URL，直接返回
+        if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+            return filePath;
         }
         
         // 如果serverAddress是HTTP/HTTPS地址，构建完整URL
-        if (serverAddress.startsWith("http://") || serverAddress.startsWith("https://")) {
+        if (serverAddress != null && !serverAddress.isEmpty() && 
+            (serverAddress.startsWith("http://") || serverAddress.startsWith("https://"))) {
             if (serverAddress.endsWith("/")) {
                 serverAddress = serverAddress.substring(0, serverAddress.length() - 1);
             }
+            
+            // 处理filePath：去掉开头的斜杠，避免重复
             if (filePath.startsWith("/")) {
                 filePath = filePath.substring(1);
             }
+            
+            // 如果filePath已经包含/uploads/，直接拼接
+            if (filePath.startsWith("uploads/")) {
+                return serverAddress + "/" + filePath;
+            }
+            
+            // 否则添加/uploads/前缀
             return serverAddress + "/uploads/" + filePath;
         }
         
-        // 其他情况使用相对路径
+        // 如果没有配置服务器地址或不是HTTP地址，使用相对路径
+        // 前端会根据apiUrl自动拼接完整URL
+        if (filePath.startsWith("/")) {
+            return filePath;
+        }
         return "/uploads/" + filePath;
     }
     

@@ -1,6 +1,7 @@
 com\xl\common\config\CorsConfig$CorsProperties.class
 com\xl\common\config\MybatisPlusConfig.class
 com\xl\common\config\CorsConfig.class
+com\xl\common\result\Result.class
+com\xl\common\config\WebMvcConfig.class
 com\xl\common\config\MongoConfig.class
 com\xl\common\entity\BaseEntity.class
-com\xl\common\result\Result.class

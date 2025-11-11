@@ -5,7 +5,7 @@
         <div class="ant-upload-list-item ant-upload-list-item-done ant-upload-list-item-list-type-picture-card">
           <div class="ant-upload-list-item-info">
             <a class="ant-upload-list-item-thumbnail">
-              <img :src=" imageUrl" class="ant-upload-list-item-image" />
+              <img :src="getImageUrl(imageUrl)" class="ant-upload-list-item-image" />
             </a>
           </div>
           <span class="ant-upload-list-item-actions">
@@ -29,8 +29,8 @@
       @change="handleChange"
       v-else>
       <div>
-        <loading-outlined v-if="loading"></loading-outlined>
-        <plus-outlined v-else></plus-outlined>
+        <loading-outlined v-if="loading" />
+        <plus-outlined v-else />
         <div class="ant-upload-text" v-if="tipText">{{ tipText }}</div>
         <div class="ant-upload-text ant-upload-sub-text" v-if="subTipText">{{ subTipText }}</div>
       </div>
@@ -41,7 +41,7 @@
 <script lang="ts" setup>
   import { Form, Upload as AUpload } from 'ant-design-vue';
   import { PlusOutlined, LoadingOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons-vue';
-  import type { UploadChangeParam } from 'ant-design-vue';
+  import type { UploadChangeParam, UploadFile } from 'ant-design-vue';
   import { computed, ref, unref, watch } from 'vue';
   import { useGlobSetting } from '@/hooks/setting';
   import { getToken } from '@/utils/auth';
@@ -59,12 +59,55 @@
   const fileList = ref([]);
   const imageUrl = ref<string>('');
   const loading = ref<boolean>(false);
-  const apiUrl = ref(globSetting.apiUrl);
   const formItemContext = Form.useInjectFormItemContext();
 
   const getAction = computed(() => globSetting.uploadUrl + '/' + props.type);
   const getHeaders = computed(() => ({ Authorization: getToken() as string }));
-  const getImgList = computed<string[]>(() => (imageUrl.value ? [imageUrl.value] : []));
+  const getImgList = computed<string[]>(() => (imageUrl.value ? [getImageUrl(imageUrl.value)] : []));
+
+  // 获取完整的图片URL（如果是相对路径，拼接baseURL）
+  function getImageUrl(url: string): string {
+    if (!url) return '';
+    let fullUrl = '';
+
+    // 如果已经是完整URL（包含http://或https://），直接使用
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      fullUrl = url;
+    } else {
+      // 如果是相对路径，拼接API基础URL
+      const baseUrl = globSetting.apiUrl || '';
+      if (url.startsWith('/')) {
+        fullUrl = baseUrl + url;
+      } else {
+        fullUrl = baseUrl + '/' + url;
+      }
+    }
+
+    // 对URL进行编码处理，确保中文字符正确编码
+    try {
+      // 解析URL，分别处理协议、域名和路径部分
+      const urlObj = new URL(fullUrl);
+      // 只编码路径部分，保留协议、域名、端口等
+      const encodedPath = urlObj.pathname
+        .split('/')
+        .map(segment => encodeURIComponent(segment))
+        .join('/');
+
+      // 添加token参数，用于图片访问时的身份验证
+      const token = getToken();
+      const separator = urlObj.search ? '&' : '?';
+      const tokenParam = token ? `${separator}token=${encodeURIComponent(token as string)}` : '';
+
+      // 重新构建URL
+      return urlObj.origin + encodedPath + (urlObj.search || '') + tokenParam + (urlObj.hash || '');
+    } catch (e) {
+      // 如果URL解析失败，使用encodeURI进行整体编码
+      const token = getToken();
+      const separator = fullUrl.includes('?') ? '&' : '?';
+      const tokenParam = token ? `${separator}token=${encodeURIComponent(token as string)}` : '';
+      return encodeURI(fullUrl) + tokenParam;
+    }
+  }
 
   watch(
     () => props.value,
@@ -74,15 +117,15 @@
     { immediate: true },
   );
 
-  function beforeUpload(file) {
-    const isAccept = new RegExp('image/*').test(file.type);
+  function beforeUpload(file: UploadFile) {
+    const isAccept = file.type ? new RegExp('image/*').test(file.type) : false;
     if (!isAccept) {
       createMessage.error(t('component.upload.uploadImg'));
       return isAccept;
     }
     if (!props.fileSize) return true;
     const unitNum = units[props.sizeUnit];
-    const isRightSize = file.size / unitNum < props.fileSize;
+    const isRightSize = file.size ? file.size / unitNum < props.fileSize : true;
     if (!isRightSize) {
       createMessage.error(`图片大小超过${props.fileSize}${props.sizeUnit}`);
       return false;
@@ -101,7 +144,8 @@
     if (file.status === 'done') {
       loading.value = false;
       if (file.response.code === 200) {
-        imageUrl.value = file.response.data.url;
+        const url = file.response.data.url;
+        imageUrl.value = url;
         emit('update:value', unref(imageUrl));
         emit('change', unref(imageUrl));
         formItemContext.onFieldChange();
@@ -114,6 +158,7 @@
     createImgPreview({ imageList: unref(getImgList) });
   }
   function handleRemove() {
+    imageUrl.value = '';
     emit('update:value', '');
     emit('change', '');
     formItemContext.onFieldChange();
