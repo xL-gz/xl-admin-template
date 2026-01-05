@@ -1,35 +1,11 @@
 -- ========================================
--- XL即时通讯系统 - 完整数据库脚本
--- 支持：应用系统 → 菜单 → 权限 三层架构
--- 包含：表结构 + 初始数据 + 示例权限
+-- XL即时通讯系统 - MySQL数据库脚本
 -- ========================================
 
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS `xl_im` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS `xl_im` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
 
 USE `xl_im`;
-
--- ========================================
--- 第一层：应用系统表（System）
--- ========================================
-DROP TABLE IF EXISTS `sys_system`;
-CREATE TABLE `sys_system` (
-  `id` varchar(50) NOT NULL COMMENT '系统ID',
-  `en_code` varchar(50) NOT NULL COMMENT '系统编码',
-  `full_name` varchar(100) NOT NULL COMMENT '系统名称',
-  `description` varchar(500) DEFAULT NULL COMMENT '系统说明',
-  `icon` varchar(100) DEFAULT NULL COMMENT '系统图标',
-  `url_address` varchar(255) DEFAULT NULL COMMENT '系统地址',
-  `sort_code` int DEFAULT '0' COMMENT '排序码',
-  `enabled_mark` tinyint DEFAULT '1' COMMENT '启用状态（0禁用 1启用）',
-  `is_main` tinyint DEFAULT '0' COMMENT '是否主系统（0否 1是）',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  `deleted` tinyint DEFAULT '0' COMMENT '删除标志（0代表存在 1代表删除）',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_en_code` (`en_code`),
-  KEY `idx_enabled_mark` (`enabled_mark`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='应用系统表';
 
 -- ========================================
 -- 1. 用户表
@@ -45,17 +21,16 @@ CREATE TABLE `sys_user` (
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像地址',
   `gender` tinyint DEFAULT '0' COMMENT '性别（0未知 1男 2女）',
   `dept_id` bigint DEFAULT NULL COMMENT '部门ID',
-  `position_id` bigint DEFAULT NULL COMMENT '岗位ID',
   `status` tinyint DEFAULT '1' COMMENT '帐号状态（0停用 1正常）',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `deleted` tinyint DEFAULT '0' COMMENT '删除标志（0代表存在 1代表删除）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_username` (`username`),
   KEY `idx_dept_id` (`dept_id`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户信息表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户信息表';
 
 -- ========================================
 -- 2. 角色表
@@ -66,16 +41,15 @@ CREATE TABLE `sys_role` (
   `role_name` varchar(30) NOT NULL COMMENT '角色名称',
   `role_key` varchar(100) NOT NULL COMMENT '角色权限字符串',
   `role_sort` int DEFAULT '0' COMMENT '显示顺序',
-  `data_scope` tinyint DEFAULT '1' COMMENT '数据权限范围（1全部 2自定义 3本部门 4本部门及以下 5仅本人）',
   `status` tinyint DEFAULT '1' COMMENT '角色状态（0停用 1正常）',
   `remark` varchar(500) DEFAULT NULL COMMENT '备注',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `deleted` tinyint DEFAULT '0' COMMENT '删除标志（0代表存在 1代表删除）',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_role_key` (`role_key`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色信息表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='角色信息表';
 
 -- ========================================
 -- 3. 部门表
@@ -85,18 +59,52 @@ CREATE TABLE `sys_dept` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '部门ID',
   `parent_id` bigint DEFAULT '0' COMMENT '父部门ID',
   `dept_name` varchar(50) NOT NULL COMMENT '部门名称',
-  `dept_code` varchar(50) DEFAULT NULL COMMENT '部门编码',
   `leader` varchar(50) DEFAULT NULL COMMENT '负责人',
   `phone` varchar(11) DEFAULT NULL COMMENT '联系电话',
   `email` varchar(50) DEFAULT NULL COMMENT '邮箱',
   `sort_code` int DEFAULT '0' COMMENT '显示顺序',
   `status` tinyint DEFAULT '1' COMMENT '部门状态（0停用 1正常）',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+  `update_time` datetime DEFAULT NULL COMMENT '更新时间',
   `deleted` tinyint DEFAULT '0' COMMENT '删除标志',
   PRIMARY KEY (`id`),
   KEY `idx_parent_id` (`parent_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='部门表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='部门表';
+
+-- ========================================
+-- 4. 用户角色关联表
+-- ========================================
+DROP TABLE IF EXISTS `sys_user_role`;
+CREATE TABLE `sys_user_role` (
+  `user_id` bigint NOT NULL COMMENT '用户ID',
+  `role_id` bigint NOT NULL COMMENT '角色ID',
+  PRIMARY KEY (`user_id`,`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户和角色关联表';
+
+-- ========================================
+-- 插入初始数据
+-- ========================================
+
+-- 部门数据
+INSERT INTO `sys_dept` (`id`, `parent_id`, `dept_name`, `leader`, `phone`, `email`, `sort_code`, `status`, `create_time`, `update_time`) VALUES
+(1, 0, '某某科技有限公司', '张总', '010-12345678', 'ceo@example.com', 1, 1, NOW(), NOW()),
+(2, 1, '技术部', '李经理', '010-12345679', 'tech@example.com', 1, 1, NOW(), NOW()),
+(3, 1, '市场部', '王经理', '010-12345680', 'market@example.com', 2, 1, NOW(), NOW());
+
+-- 角色数据
+INSERT INTO `sys_role` (`id`, `role_name`, `role_key`, `role_sort`, `status`, `remark`, `create_time`, `update_time`) VALUES
+(1, '超级管理员', 'admin', 1, 1, '超级管理员，拥有所有权限', NOW(), NOW()),
+(2, 'IM用户', 'im_user', 2, 1, '即时通讯系统普通用户', NOW(), NOW());
+
+-- 用户数据（密码都是123456的MD5加密：e10adc3949ba59abbe56e057f20f883e）
+INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `email`, `phone`, `gender`, `dept_id`, `status`, `remark`, `create_time`, `update_time`) VALUES
+(1, 'admin', 'e10adc3949ba59abbe56e057f20f883e', '系统管理员', 'admin@example.com', '13800138000', 1, 1, 1, '系统管理员账号', NOW(), NOW()),
+(2, 'test', 'e10adc3949ba59abbe56e057f20f883e', '测试用户', 'test@example.com', '13800138001', 2, 2, 1, '测试用户账号', NOW(), NOW());
+
+-- 用户角色关联数据
+INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES
+(1, 1),
+(2, 2);
 
 -- ========================================
 -- 4. 用户角色关联表
