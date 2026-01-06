@@ -28,61 +28,12 @@ db.system_config.insertOne({
     allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'],
     uploadPath: '/uploads'
   },
-  imConfig: {
-    enableGroupChat: true,
-    enablePrivateChat: true,
-    maxGroupMembers: 500,
-    maxFriends: 1000,
-    enableFileTransfer: true,
-    maxFileSize: 20971520
-  },
   metadata: {
     createdAt: new Date(),
     updatedAt: new Date(),
     version: '1.0.0'
   }
 });
-
-// ========================================
-// 2. 聊天消息集合
-// ========================================
-db.chat_message.drop();
-db.createCollection('chat_message');
-
-// 创建索引
-db.chat_message.createIndex({ "conversationId": 1, "createTime": -1 });
-db.chat_message.createIndex({ "fromUserId": 1 });
-db.chat_message.createIndex({ "toUserId": 1 });
-
-// ========================================
-// 3. 群组消息集合
-// ========================================
-db.group_message.drop();
-db.createCollection('group_message');
-
-// 创建索引
-db.group_message.createIndex({ "groupId": 1, "createTime": -1 });
-db.group_message.createIndex({ "fromUserId": 1 });
-
-// ========================================
-// 4. 文件信息集合
-// ========================================
-db.file_info.drop();
-db.createCollection('file_info');
-
-// 创建索引
-db.file_info.createIndex({ "uploadUserId": 1 });
-db.file_info.createIndex({ "createTime": -1 });
-
-// ========================================
-// 5. 用户在线状态集合
-// ========================================
-db.user_online_status.drop();
-db.createCollection('user_online_status');
-
-// 创建索引
-db.user_online_status.createIndex({ "userId": 1 }, { unique: true });
-db.user_online_status.createIndex({ "lastOnlineTime": -1 });
 
 print("MongoDB初始化完成！");
 });
