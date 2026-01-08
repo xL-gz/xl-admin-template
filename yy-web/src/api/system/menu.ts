@@ -18,9 +18,9 @@ export function getAllMenuList(data?) {
 }
 
 // 获取上级菜单下拉框（带systemId过滤）
-export function getMenuSelector(data, id, systemId = '0') {
+export function getMenuSelector(data = {}, id = 0, systemId = 'admin-system') {
   return defHttp.get({
-    url: `${Api.Prefix}/Selector/${id || '0'}/${systemId}`,
+    url: `${Api.Prefix}/Selector/${id}/${systemId}`,
     params: data,
   });
 }

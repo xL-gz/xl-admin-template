@@ -241,10 +241,19 @@
 
   async function loadMenuTree() {
     try {
-      const res = await getMenuSelector();
+      // 修复：调用getMenuSelector时需要传递正确的参数
+      const res = await getMenuSelector({}, 0, 'admin-system');
       menuTreeData.value = buildTreeWithRoot(res.data || []);
     } catch (error) {
       console.error('加载菜单树失败:', error);
+      // 如果接口失败，提供一个空的根节点
+      menuTreeData.value = [
+        {
+          id: 0,
+          fullName: '顶级菜单',
+          children: [],
+        },
+      ];
     }
   }
 
@@ -268,6 +277,7 @@
         ...values,
         orderNum: values.sortCode,
         parentId: values.parentId || 0,
+        systemId: 'admin-system', // 设置默认的systemId
       };
 
       if (unref(id)) {
