@@ -114,7 +114,17 @@
       label: '上级',
       component: 'TreeSelect',
       componentProps: { placeholder: '请选择', onChange: onParentIdChange },
-      rules: [{ required: true, message: '必填', trigger: 'change' }],
+      rules: [{ 
+        required: true, 
+        message: '必填', 
+        trigger: 'change',
+        validator: (_, value) => {
+          if (value === undefined || value === null || value === '') {
+            return Promise.reject('请选择上级菜单');
+          }
+          return Promise.resolve();
+        }
+      }],
     },
     {
       field: 'fullName',
@@ -306,7 +316,7 @@
     if (state.category !== 'App') return;
     const values = getFieldsValue();
     let tempData: any[] = [];
-    if (val === '-1') {
+    if (val === 0 || val === '0') { // 修改为检查0，因为顶级节点的id现在是0
       tempData = appTypeData.filter(o => o.id == 1);
       if (values.type && values.type != 1) setFieldsValue({ type: '' });
     } else {
@@ -337,7 +347,7 @@
       let topItem = {
         fullName: '顶级节点',
         hasChildren: true,
-        id: '-1',
+        id: 0, // 修改为0，因为顶级菜单的parentId通常是0
         children: res.data.list,
       };
       updateSchema({ field: 'parentId', componentProps: { options: [topItem] } });

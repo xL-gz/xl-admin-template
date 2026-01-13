@@ -17,11 +17,17 @@ export function getAllMenuList(data?) {
   return defHttp.get({ url: Api.Prefix + '/list', params: data });
 }
 
-// 获取上级菜单下拉框（带systemId过滤）
+// 获取上级菜单下拉框（使用菜单列表接口）
 export function getMenuSelector(data = {}, id = 0, systemId = 'admin-system') {
-  return defHttp.get({
-    url: `${Api.Prefix}/Selector/${id}/${systemId}`,
-    params: data,
+  // 直接使用菜单列表接口，因为后端可能没有专门的选择器接口
+  return getAllMenuList({ systemId, ...data }).then(res => {
+    // 包装返回数据格式，保持与原接口一致
+    return {
+      ...res,
+      data: {
+        list: res.data || []
+      }
+    };
   });
 }
 
