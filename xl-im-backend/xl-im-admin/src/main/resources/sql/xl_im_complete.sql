@@ -3,7 +3,7 @@
 -- ========================================
 
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS `xl_im` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS `xl_im` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 USE `xl_im`;
 
@@ -17,7 +17,7 @@ CREATE TABLE `sys_user` (
   `password` varchar(100) NOT NULL COMMENT '密码',
   `nickname` varchar(30) DEFAULT NULL COMMENT '用户昵称',
   `email` varchar(50) DEFAULT NULL COMMENT '用户邮箱',
-  `phone` varchar(11) DEFAULT NULL COMMENT '手机号码',
+  `phone` varchar(20) DEFAULT NULL COMMENT '手机号码',
   `avatar` varchar(255) DEFAULT NULL COMMENT '头像地址',
   `gender` tinyint DEFAULT '0' COMMENT '性别（0未知 1男 2女）',
   `dept_id` bigint DEFAULT NULL COMMENT '部门ID',
@@ -30,7 +30,7 @@ CREATE TABLE `sys_user` (
   UNIQUE KEY `uk_username` (`username`),
   KEY `idx_dept_id` (`dept_id`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户信息表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户信息表';
 
 -- ========================================
 -- 2. 角色表
@@ -49,7 +49,7 @@ CREATE TABLE `sys_role` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_role_key` (`role_key`),
   KEY `idx_status` (`status`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='角色信息表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色信息表';
 
 -- ========================================
 -- 3. 部门表
@@ -60,7 +60,7 @@ CREATE TABLE `sys_dept` (
   `parent_id` bigint DEFAULT '0' COMMENT '父部门ID',
   `dept_name` varchar(50) NOT NULL COMMENT '部门名称',
   `leader` varchar(50) DEFAULT NULL COMMENT '负责人',
-  `phone` varchar(11) DEFAULT NULL COMMENT '联系电话',
+  `phone` varchar(20) DEFAULT NULL COMMENT '联系电话',
   `email` varchar(50) DEFAULT NULL COMMENT '邮箱',
   `sort_code` int DEFAULT '0' COMMENT '显示顺序',
   `status` tinyint DEFAULT '1' COMMENT '部门状态（0停用 1正常）',
@@ -69,7 +69,7 @@ CREATE TABLE `sys_dept` (
   `deleted` tinyint DEFAULT '0' COMMENT '删除标志',
   PRIMARY KEY (`id`),
   KEY `idx_parent_id` (`parent_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='部门表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='部门表';
 
 -- ========================================
 -- 4. 用户角色关联表
@@ -79,7 +79,7 @@ CREATE TABLE `sys_user_role` (
   `user_id` bigint NOT NULL COMMENT '用户ID',
   `role_id` bigint NOT NULL COMMENT '角色ID',
   PRIMARY KEY (`user_id`,`role_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户和角色关联表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户和角色关联表';
 
 -- ========================================
 -- 插入初始数据
@@ -105,21 +105,6 @@ INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `email`, `phon
 INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES
 (1, 1),
 (2, 2);
-
--- ========================================
--- 4. 用户角色关联表
--- ========================================
-DROP TABLE IF EXISTS `sys_user_role`;
-CREATE TABLE `sys_user_role` (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
-  `user_id` bigint NOT NULL COMMENT '用户ID',
-  `role_id` bigint NOT NULL COMMENT '角色ID',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uk_user_role` (`user_id`, `role_id`),
-  KEY `idx_user_id` (`user_id`),
-  KEY `idx_role_id` (`role_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户和角色关联表';
 
 -- ========================================
 -- 第二层：菜单权限表（Menu）- 增加 system_id
@@ -307,6 +292,27 @@ CREATE TABLE `sys_log` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='操作日志表';
 
 -- ========================================
+-- 13. 应用系统表
+-- ========================================
+DROP TABLE IF EXISTS `sys_system`;
+CREATE TABLE `sys_system` (
+  `id` varchar(50) NOT NULL COMMENT '系统ID',
+  `en_code` varchar(50) NOT NULL COMMENT '系统编码',
+  `full_name` varchar(100) NOT NULL COMMENT '系统名称',
+  `description` varchar(500) DEFAULT NULL COMMENT '系统描述',
+  `icon` varchar(100) DEFAULT NULL COMMENT '系统图标',
+  `url_address` varchar(255) DEFAULT NULL COMMENT '系统地址',
+  `sort_code` int DEFAULT '0' COMMENT '排序',
+  `enabled_mark` tinyint DEFAULT '1' COMMENT '启用状态（0禁用 1启用）',
+  `is_main` tinyint DEFAULT '0' COMMENT '是否主系统（0否 1是）',
+  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `deleted` tinyint DEFAULT '0' COMMENT '删除标志',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_en_code` (`en_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='应用系统表';
+
+-- ========================================
 -- 插入初始数据
 -- ========================================
 
@@ -314,23 +320,6 @@ CREATE TABLE `sys_log` (
 INSERT INTO `sys_system` (`id`, `en_code`, `full_name`, `description`, `icon`, `url_address`, `sort_code`, `enabled_mark`, `is_main`) VALUES
 ('im-system', 'imSystem', 'IM系统', '即时通讯核心功能', 'icon-ym icon-ym-nav-im', '/im', 1, 1, 0),
 ('admin-system', 'adminSystem', '管理后台', '系统管理和配置', 'icon-ym icon-ym-nav-admin', '/admin', 2, 1, 1);
-
--- 插入部门数据
-INSERT INTO `sys_dept` (`id`, `parent_id`, `dept_name`, `dept_code`, `leader`, `sort_code`, `status`) VALUES
-(1, 0, '总公司', 'ROOT', '张三', 0, 1),
-(2, 1, '技术部', 'TECH', '李四', 1, 1),
-(3, 1, '市场部', 'MARKET', '王五', 2, 1);
-
--- 插入用户数据（密码：admin123 的BCrypt加密）
-INSERT INTO `sys_user` (`id`, `username`, `password`, `nickname`, `email`, `phone`, `avatar`, `gender`, `dept_id`, `status`) VALUES
-(1, 'admin', '$2a$10$7JB720yubVSZfsvVWb5K5O9hf4A3qXC9E0kXdOQVE1ypHKXQ8fH.W', '超级管理员', 'admin@xl.com', '13800138000', '', 1, 1, 1),
-(2, 'test', '$2a$10$7JB720yubVSZfsvVWb5K5O9hf4A3qXC9E0kXdOQVE1ypHKXQ8fH.W', '测试用户', 'test@xl.com', '13800138001', '', 1, 2, 1);
-
--- 插入角色数据
-INSERT INTO `sys_role` (`id`, `role_name`, `role_key`, `role_sort`, `data_scope`, `status`, `remark`) VALUES
-(1, '超级管理员', 'admin', 1, 1, 1, '超级管理员，拥有所有权限'),
-(2, 'IM用户', 'im_user', 2, 5, 1, '即时通讯普通用户'),
-(3, '系统管理员', 'sys_admin', 3, 2, 1, '系统管理员，管理系统配置');
 
 -- 插入用户角色关联数据
 INSERT INTO `sys_user_role` (`user_id`, `role_id`) VALUES
