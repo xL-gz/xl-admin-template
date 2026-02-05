@@ -2,29 +2,13 @@
   <div class="youyi-content-wrapper">
     <div class="youyi-content-wrapper-center">
       <div class="youyi-content-wrapper-content">
-        <!-- 三层架构说明提示 -->
-        <a-alert 
-          type="info" 
-          show-icon 
-          closable
-          class="mb-4"
-          message="三层架构权限管理"
-          description="本系统采用三层架构：应用系统 → 菜单 → 权限。您可以为每个应用系统配置独立的菜单和权限体系。点击「菜单管理」进入第二层配置。">
-          <template #icon>
-            <i class="icon-ym icon-ym-generator-info" />
-          </template>
-        </a-alert>
+
 
         <BasicTable @register="registerTable">
           <template #tableTitle>
             <a-button type="primary" preIcon="icon-ym icon-ym-btn-add" @click="addOrUpdateHandle()">
               {{ t('common.addText') }}
             </a-button>
-            <a-tooltip title="查看三层架构使用指南">
-              <a-button preIcon="icon-ym icon-ym-generator-help" @click="showGuide">
-                使用指南
-              </a-button>
-            </a-tooltip>
           </template>
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'icon'">
@@ -48,64 +32,6 @@
     <Form @register="registerForm" @reload="reload" />
     <Menu @register="registerMenu" />
     <Portal @register="registerPortal" />
-    
-    <!-- 使用指南弹窗 -->
-    <BasicModal 
-      v-model:open="guideVisible" 
-      title="三层架构权限使用指南" 
-      width="900px"
-      :footer="null">
-      <div class="guide-content">
-        <a-typography-title :level="4">📋 架构说明</a-typography-title>
-        <a-typography-paragraph>
-          <a-steps direction="vertical" :current="0" size="small">
-            <a-step title="第一层：应用系统" description="划分不同的业务领域，如：业务平台、开发平台等" />
-            <a-step title="第二层：菜单管理" description="每个应用系统下配置独立的菜单树，支持9种菜单类型" />
-            <a-step title="第三层：权限配置" description="为每个菜单配置按钮、列表、表单、数据四种权限" />
-          </a-steps>
-        </a-typography-paragraph>
-
-        <a-divider />
-
-        <a-typography-title :level="4">🎯 操作流程</a-typography-title>
-        <a-typography-paragraph>
-          <ol>
-            <li>在此页面创建和管理应用系统</li>
-            <li>点击应用系统的「<strong>菜单管理</strong>」按钮，进入该系统的菜单配置</li>
-            <li>在菜单管理中，点击菜单的下拉操作，可配置该菜单的详细权限</li>
-            <li>在角色管理中，为角色分配应用系统、菜单和权限</li>
-          </ol>
-        </a-typography-paragraph>
-
-        <a-divider />
-
-        <a-typography-title :level="4">✅ 权限类型</a-typography-title>
-        <a-descriptions bordered size="small" :column="1">
-          <a-descriptions-item label="按钮权限（Button）">
-            控制页面上的操作按钮，如：新增、编辑、删除、导出等
-          </a-descriptions-item>
-          <a-descriptions-item label="列表权限（Column）">
-            控制表格显示的列，可以隐藏敏感列
-          </a-descriptions-item>
-          <a-descriptions-item label="表单权限（Form）">
-            控制表单字段的显示和编辑，可以隐藏或只读敏感字段
-          </a-descriptions-item>
-          <a-descriptions-item label="数据权限（Data）">
-            控制数据范围，如：本部门数据、个人数据等
-          </a-descriptions-item>
-        </a-descriptions>
-
-        <a-divider />
-
-        <a-typography-paragraph>
-          <a-space>
-            <a-button type="link" href="/yy-web/三层架构权限使用指南.md" target="_blank">
-              查看完整文档
-            </a-button>
-          </a-space>
-        </a-typography-paragraph>
-      </div>
-    </BasicModal>
   </div>
 </template>
 <script lang="ts" setup>
@@ -125,7 +51,6 @@
 
   const { t } = useI18n();
   const { createMessage } = useMessage();
-  const guideVisible = ref(false);
   
   const columns: BasicColumn[] = [
     { title: '应用名称', dataIndex: 'fullName', width: 200 },
@@ -225,9 +150,6 @@
       // 避免重复显示错误提示
       console.error('删除失败:', error);
     });
-  }
-  function showGuide() {
-    guideVisible.value = true;
   }
 </script>
 

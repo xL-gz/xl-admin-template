@@ -1,17 +1,6 @@
 <template>
   <BasicPopup v-bind="$attrs" @register="registerPopup" :title="title" class="full-popup">
-    <!-- 菜单管理说明 -->
-    <a-alert 
-      type="info" 
-      show-icon 
-      closable
-      class="mx-10px mt-10px mb-10px"
-      message="菜单配置说明"
-      description="这是第二层（菜单层）配置。您可以为当前应用系统配置菜单树结构，并为每个菜单配置按钮、列表、表单、数据四种权限。">
-      <template #icon>
-        <i class="icon-ym icon-ym-generator-menu" />
-      </template>
-    </a-alert>
+
     
     <!-- 当前系统信息 -->
     <a-descriptions 
