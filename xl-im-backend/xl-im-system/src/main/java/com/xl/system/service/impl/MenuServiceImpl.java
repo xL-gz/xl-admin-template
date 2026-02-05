@@ -199,6 +199,21 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, Menu> implements Me
     
     @Override
     public boolean insertMenu(MenuDTO menuDTO) {
+        // 如果menuName为空，使用fullName作为menuName
+        if (menuDTO.getMenuName() == null || menuDTO.getMenuName().trim().isEmpty()) {
+            menuDTO.setMenuName(menuDTO.getFullName());
+        }
+        
+        // 设置默认的systemId（如果没有设置的话）
+        if (menuDTO.getSystemId() == null || menuDTO.getSystemId().trim().isEmpty()) {
+            menuDTO.setSystemId("admin-system");
+        }
+        
+        // 修正parentId：如果是-1，改为0（顶级菜单）
+        if (menuDTO.getParentId() != null && menuDTO.getParentId() == -1) {
+            menuDTO.setParentId(0L);
+        }
+        
         Menu menu = BeanUtil.copyProperties(menuDTO, Menu.class);
         return this.save(menu);
     }

@@ -1,153 +1,41 @@
 // ========================================
 // XL即时通讯系统 - MongoDB初始化脚本
-// 用途：存储系统配置、聊天记录、文件信息等非关系型数据
 // ========================================
 
 // 使用数据库
 db = db.getSiblingDB('xl_im');
 
 // ========================================
-// 1. 系统配置集合（system_config）
-// 用途：存储复杂的系统配置信息（JSON格式）
+// 1. 系统配置集合
 // ========================================
 db.system_config.drop();
 db.createCollection('system_config');
 
-// 插入系统配置数据
 db.system_config.insertOne({
   _id: 'main_config',
-  
-  // 基本设置
   basic: {
     title: 'XL即时通讯系统',
     sysName: 'XL-IM',
-    sysVersion: 'v1.0.0',
-    companyName: '某某科技有限公司',
-    copyright: '© 2024 某某科技',
-    companyCode: 'XXKJ',
-    companyAddress: '北京市朝阳区xxx号',
-    companyContacts: '张三',
-    companyTelePhone: '010-12345678',
-    companyEmail: 'contact@example.com',
-    sysDescription: '企业级即时通讯系统'
+    sysVersion: 'v1.0.0'
   },
-  
-  // 图标配置
-  icons: {
-    loginIcon: '/static/img/login-logo.png',
-    logoIcon: '/static/img/logo.png',
-    appIcon: '/static/img/app-icon.png',
-    favicon: '/favicon.ico'
-  },
-  
-  // 安全设置
   security: {
-    singleLogin: 1,                      // 登录方式（0:允许多端 1:单端登录）
-    tokenTimeout: 7200,                  // Token超时时间(秒)
-    passwordErrorsNumber: 5,             // 密码错误次数限制
-    whitelistSwitch: false,              // 白名单开关
-    whiteListIp: [],                     // 白名单IP列表
-    enableCaptcha: true,                 // 是否启用验证码
-    captchaOnFailure: 3                  // 失败N次后启用验证码
+    tokenTimeout: 7200,
+    passwordErrorsNumber: 5,
+    enableCaptcha: true
   },
-  
-  // 密码策略
-  passwordPolicy: {
-    passwordStrengthLimit: 2,            // 密码强度限制（0:无 1:弱 2:中 3:强）
-    passwordLengthMin: 6,                // 最小长度
-    passwordLengthMax: 20,               // 最大长度
-    containsNumbers: true,               // 必须包含数字
-    includeLowercaseLetters: true,       // 包含小写字母
-    includeUppercaseLetters: false,      // 包含大写字母
-    containsCharacters: false,           // 包含特殊字符
-    passwordExpireDays: 90,              // 密码过期天数（0表示永不过期）
-    mandatoryModificationOfInitialPassword: 0  // 是否强制修改初始密码
-  },
-  
-  // 文件上传配置
   fileUpload: {
-    maxSize: 10485760,                   // 最大文件大小(字节) 10MB
-    allowedTypes: [                       // 允许的文件类型
-      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-      'application/pdf', 'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ],
-    imageMaxSize: 5242880,               // 图片最大大小(字节) 5MB
-    avatarMaxSize: 1048576,              // 头像最大大小(字节) 1MB
-    uploadPath: '/uploads',              // 上传路径
-    avatarPath: '/uploads/avatars'       // 头像路径
+    maxSize: 10485760,
+    allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'],
+    uploadPath: '/uploads'
   },
-  
-  // IM配置
-  imConfig: {
-    enableGroupChat: true,               // 启用群聊
-    enablePrivateChat: true,             // 启用私聊
-    maxGroupMembers: 500,                // 群组最大成员数
-    maxFriends: 1000,                    // 最大好友数
-    messageRetentionDays: 90,            // 消息保留天数（0表示永久）
-    enableFileTransfer: true,            // 启用文件传输
-    maxFileSize: 20971520,               // 文件传输最大大小(字节) 20MB
-    enableVoiceCall: true,               // 启用语音通话
-    enableVideoCall: true,               // 启用视频通话
-    enableScreenShare: false,            // 启用屏幕共享
-    offlineMessagePush: true,            // 离线消息推送
-    messageReadReceipt: true             // 消息已读回执
-  },
-  
-  // 界面配置
-  uiConfig: {
-    theme: 'light',                      // 主题（light/dark）
-    primaryColor: '#1890ff',             // 主题色
-    enableThemeSwitch: true,             // 允许用户切换主题
-    enableMultiLanguage: true,           // 启用多语言
-    defaultLanguage: 'zh_CN',            // 默认语言
-    enableAnimation: true,               // 启用动画效果
-    compactMode: false                   // 紧凑模式
-  },
-  
-  // 第三方集成
-  thirdParty: {
-    // 企业微信
-    weChat: {
-      enabled: false,
-      corpId: '',
-      agentId: '',
-      secret: ''
-    },
-    // 钉钉
-    dingTalk: {
-      enabled: false,
-      appKey: '',
-      appSecret: ''
-    },
-    // 飞书
-    feishu: {
-      enabled: false,
-      appId: '',
-      appSecret: ''
-    }
-  },
-  
-  // 消息推送配置
-  pushConfig: {
-    enableEmailNotify: false,            // 启用邮件通知
-    enableSmsNotify: false,              // 启用短信通知
-    emailProvider: 'smtp',               // 邮件服务商
-    smtpHost: '',
-    smtpPort: 465,
-    smtpUser: '',
-    smtpPassword: '',
-    smsProvider: ''                      // 短信服务商
-  },
-  
-  // 元数据
   metadata: {
     createdAt: new Date(),
     updatedAt: new Date(),
     version: '1.0.0'
   }
+});
+
+print("MongoDB初始化完成！");
 });
 
 print('✅ 系统配置已初始化');

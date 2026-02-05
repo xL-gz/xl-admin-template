@@ -4,10 +4,6 @@ server:
 spring:
   application:
     name: xl-im
-  # 激活的环境配置（dev: 开发环境, prod: 生产环境）
-  # 注意：生产环境启动时通过 --spring.profiles.active=prod 参数覆盖此配置
-  profiles:
-    active: dev
   
   # 数据源配置
   datasource:
@@ -48,31 +44,45 @@ mybatis-plus:
 
 # Sa-Token配置
 sa-token:
-  # token名称
   token-name: Authorization
-  # token有效期，单位s 默认30天
   timeout: 2592000
-  # token临时有效期 (指定时间内无操作就视为token过期) 单位s 默认-1 代表不限制
   active-timeout: -1
-  # 是否允许同一账号并发登录 (为true时允许一起登录, 为false时新登录挤掉旧登录)
   is-concurrent: true
-  # 在多人登录同一账号时，是否共用一个token (为true时所有登录共用一个token, 为false时每次登录新建一个token)
   is-share: true
-  # token风格
   token-style: uuid
-  # 是否输出操作日志
   is-log: false
 
 # 文件上传配置
 file:
   upload:
-    # 本地存储路径（相对路径或绝对路径）
     path: ./uploads
-    # 文件访问基础URL（本地存储时使用）
     base-url: http://localhost:20250/uploads
-    # 最大文件大小（字节），默认10MB
     max-size: 10485760
 
-# 日志配置（使用logback-spring.xml配置）
+# CORS跨域配置
+cors:
+  allowed-origins:
+    - http://localhost:3000
+    - http://localhost:3100
+    - http://localhost:3101
+    - http://localhost:5173
+    - http://127.0.0.1:3000
+    - http://127.0.0.1:3100
+    - http://127.0.0.1:3101
+  allowed-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+    - PATCH
+  allowed-headers: '*'
+  allow-credentials: true
+  max-age: 3600
+
+# 日志配置
 logging:
+  level:
+    com.xl: debug
+    org.springframework.web: debug
   config: classpath:logback-spring.xml

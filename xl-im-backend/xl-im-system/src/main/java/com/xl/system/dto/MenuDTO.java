@@ -16,6 +16,11 @@ public class MenuDTO {
     private Long id;
     
     /**
+     * 所属应用系统ID
+     */
+    private String systemId;
+    
+    /**
      * 菜单名称
      */
     private String menuName;

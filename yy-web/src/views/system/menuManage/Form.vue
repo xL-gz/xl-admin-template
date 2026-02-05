@@ -241,19 +241,78 @@
 
   async function loadMenuTree() {
     try {
-      const res = await getMenuSelector();
-      menuTreeData.value = buildTreeWithRoot(res.data || []);
+      // 使用菜单选择器接口（内部会调用菜单列表接口）
+      const res = await getMenuSelector({}, 0, 'admin-system');
+      
+      if (res && res.data) {
+        menuTreeData.value = buildTreeWithRoot(res.data);
+      } else {
+        // 如果没有数据，提供空的根节点
+        menuTreeData.value = [
+          {
+            id: 0,
+            fullName: '顶级菜单',
+            children: [],
+          },
+        ];
+      }
     } catch (error) {
       console.error('加载菜单树失败:', error);
+      // 如果接口失败，提供一个空的根节点
+      menuTreeData.value = [
+        {
+          id: 0,
+          fullName: '顶级菜单',
+          children: [],
+        },
+      ];
     }
   }
 
-  function buildTreeWithRoot(data: any[]) {
+  function buildTreeWithRoot(data: any) {
+    // 处理数据结构 - 兼容不同的返回格式
+    let menuList = [];
+    if (Array.isArray(data)) {
+      menuList = data;
+    } else if (data && Array.isArray(data.list)) {
+      menuList = data.list;
+    }
+    
+    // 过滤掉按钮类型，只保留目录和菜单用于上级选择
+    const filteredMenus = menuList
+      .filter(item => item && item.menuType !== 'F') // 过滤掉按钮类型
+      .map(item => ({
+        id: item.id,
+        fullName: item.fullName,
+        parentId: item.parentId || 0,
+        children: item.children || [], // 保留原有的children结构
+      }));
+    
+    // 如果数据已经是树形结构，直接使用；否则构建树形结构
+    const hasChildren = filteredMenus.some(item => item.children && item.children.length > 0);
+    
+    let treeData;
+    if (hasChildren) {
+      // 数据已经是树形结构
+      treeData = filteredMenus;
+    } else {
+      // 需要构建树形结构
+      const buildTree = (items, parentId = 0) => {
+        return items
+          .filter(item => item.parentId === parentId)
+          .map(item => ({
+            ...item,
+            children: buildTree(items, item.id),
+          }));
+      };
+      treeData = buildTree(filteredMenus, 0);
+    }
+    
     return [
       {
         id: 0,
         fullName: '顶级菜单',
-        children: data || [],
+        children: treeData,
       },
     ];
   }
@@ -268,6 +327,7 @@
         ...values,
         orderNum: values.sortCode,
         parentId: values.parentId || 0,
+        systemId: 'admin-system', // 设置默认的systemId
       };
 
       if (unref(id)) {

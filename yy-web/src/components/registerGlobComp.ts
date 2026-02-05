@@ -34,6 +34,8 @@ import {
   Image,
   Upload,
   Empty,
+  Typography,
+  Descriptions,
 } from 'ant-design-vue';
 
 import { BasicHelp, BasicCaption } from '@/components/Basic';
@@ -117,6 +119,8 @@ export function registerGlobComp(app: App) {
     .use(Image)
     .use(Upload)
     .use(Empty)
+    .use(Typography)
+    .use(Descriptions)
     .use(BasicHelp)
     .use(YouyiAlert)
     .use(YouyiRate)

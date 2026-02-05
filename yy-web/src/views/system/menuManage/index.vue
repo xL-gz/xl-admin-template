@@ -57,7 +57,7 @@
 
   const [registerForm, { openModal: openFormModal }] = useModal();
   const [registerTable, { reload }] = useTable({
-    api: getMenuList,
+    api: (params) => getMenuList({ ...params, systemId: 'admin-system' }),
     columns,
     isTreeTable: true,
     pagination: false,

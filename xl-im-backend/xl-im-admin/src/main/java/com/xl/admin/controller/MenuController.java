@@ -91,6 +91,13 @@ public class MenuController {
      */
     @PostMapping
     public Result<String> add(@RequestBody MenuDTO menuDTO) {
+        // 参数验证
+        if (menuDTO.getMenuName() == null || menuDTO.getMenuName().trim().isEmpty()) {
+            if (menuDTO.getFullName() == null || menuDTO.getFullName().trim().isEmpty()) {
+                return Result.error("菜单名称不能为空");
+            }
+        }
+        
         boolean success = menuService.insertMenu(menuDTO);
         return success ? Result.success("新增成功") : Result.error("新增失败");
     }
