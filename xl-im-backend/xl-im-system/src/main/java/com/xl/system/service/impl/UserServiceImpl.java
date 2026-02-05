@@ -33,8 +33,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new RuntimeException("用户已被禁用");
         }
         
-        if (!BCrypt.checkpw(password, user.getPassword())) {
-            throw new RuntimeException("密码错误");
+        // 临时调试：打印密码信息
+        System.out.println("输入密码: " + password);
+        System.out.println("数据库密码: " + user.getPassword());
+        System.out.println("密码是否以$2a$开头: " + user.getPassword().startsWith("$2a$"));
+        
+        // 检查密码格式，如果是BCrypt格式则使用BCrypt验证，否则使用MD5
+        if (user.getPassword().startsWith("$2a$") || user.getPassword().startsWith("$2b$") || user.getPassword().startsWith("$2y$")) {
+            // BCrypt格式
+            boolean isValid = BCrypt.checkpw(password, user.getPassword());
+            System.out.println("BCrypt验证结果: " + isValid);
+            if (!isValid) {
+                throw new RuntimeException("密码错误");
+            }
+        } else {
+            // MD5格式（兼容旧数据）
+            String md5Password = cn.hutool.crypto.digest.DigestUtil.md5Hex(password);
+            System.out.println("MD5验证 - 输入密码MD5: " + md5Password);
+            if (!md5Password.equals(user.getPassword())) {
+                throw new RuntimeException("密码错误");
+            }
         }
         
         // 登录
